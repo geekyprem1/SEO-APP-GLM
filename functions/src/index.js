@@ -45,7 +45,6 @@ const { fetchVideo, fetchChannel, searchVideos } = require('./youtube');
 
 // Define secrets (only loaded when functions execute).
 const openrouterKey = defineSecret('OPENROUTER_API_KEY');
-const replicateToken = defineSecret('REPLICATE_API_TOKEN');
 const siliconflowKey = defineSecret('SILICONFLOW_API_KEY');
 const youtubeKey = defineSecret('YOUTUBE_API_KEY');
 
@@ -123,7 +122,7 @@ exports.generateContent = onCall(
 // ─── generateImage ───────────────────────────────────────────────────────
 exports.generateImage = onCall(
   {
-    secrets: [siliconflowKey, replicateToken],
+    secrets: [siliconflowKey],
     timeoutSeconds: 60,
     memory: '512MiB',
   },
