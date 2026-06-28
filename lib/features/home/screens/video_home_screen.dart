@@ -13,7 +13,8 @@ class VideoHomeScreen extends ConsumerWidget {
     return const FeatureDashboard(
       format: ContentFormat.longForm,
       heading: 'VideoSEO AI',
-      subheading: 'Create high-ranking YouTube videos with AI',
+      subheading:
+          'Create better YouTube content with AI. Generate thumbnails, titles, descriptions, scripts and viral ideas.',
     );
   }
 }

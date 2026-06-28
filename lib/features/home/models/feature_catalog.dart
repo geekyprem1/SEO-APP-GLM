@@ -2,89 +2,116 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/router/routes.dart';
-import '../models/feature_item.dart';
+import 'feature_item.dart';
 
-/// Static catalog of home dashboard features.
-/// Routes for not-yet-implemented features point to their planned paths;
-/// the router will show a "coming soon" until each feature is built.
+/// Static catalog of home dashboard features, grouped into sections.
 class FeatureCatalog {
   FeatureCatalog._();
+
+  /// Section order on the dashboard.
+  static const List<String> sectionOrder = ['Create', 'Grow', 'Content'];
 
   /// The 8 AI generation features shown in the Video/Short dashboard grids.
   static List<FeatureItem> get generators =>
       all.where((f) => f.id != 'history' && f.id != 'settings').toList();
 
+  /// Generators grouped by section, in [sectionOrder].
+  static List<MapEntry<String, List<FeatureItem>>> get bySection {
+    return sectionOrder
+        .map((s) => MapEntry(
+              s,
+              generators.where((f) => f.section == s).toList(),
+            ))
+        .where((e) => e.value.isNotEmpty)
+        .toList();
+  }
+
   static const List<FeatureItem> all = [
+    // ── Create ──────────────────────────────────────────────
+    FeatureItem(
+      id: 'thumbnail',
+      title: 'Thumbnail Generator',
+      subtitle: 'AI thumbnail images',
+      icon: Icons.image_outlined,
+      color: AppColors.primary,
+      route: AppRoutes.thumbnail,
+      section: 'Create',
+    ),
     FeatureItem(
       id: 'title',
       title: 'Title Generator',
       subtitle: '10 SEO-friendly titles',
       icon: Icons.title_rounded,
-      color: AppColors.titleAccent,
+      color: AppColors.primary,
       route: AppRoutes.title,
+      section: 'Create',
+    ),
+    FeatureItem(
+      id: 'description',
+      title: 'Description Generator',
+      subtitle: 'SEO-optimized description',
+      icon: Icons.notes_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.description,
+      section: 'Create',
     ),
     FeatureItem(
       id: 'hashtags',
       title: 'Hashtag Generator',
       subtitle: '20 relevant hashtags',
       icon: Icons.tag_rounded,
-      color: AppColors.hashtagAccent,
+      color: AppColors.primary,
       route: AppRoutes.hashtags,
+      section: 'Create',
     ),
+
+    // ── Grow ────────────────────────────────────────────────
     FeatureItem(
-      id: 'description',
-      title: 'Description Generator',
-      subtitle: 'SEO-optimized description',
-      icon: Icons.description_rounded,
-      color: AppColors.descriptionAccent,
-      route: AppRoutes.description,
-    ),
-    FeatureItem(
-      id: 'content',
-      title: 'Content Generator',
-      subtitle: 'Hook, content & CTA',
-      icon: Icons.article_rounded,
-      color: AppColors.contentAccent,
-      route: AppRoutes.content,
-    ),
-    FeatureItem(
-      id: 'viral_ideas',
-      title: 'Viral Shorts Ideas',
-      subtitle: '20 viral content ideas',
-      icon: Icons.local_fire_department_rounded,
-      color: AppColors.viralAccent,
-      route: AppRoutes.viralIdeas,
+      id: 'seo',
+      title: 'SEO Analysis',
+      subtitle: 'Analyze your Shorts',
+      icon: Icons.insights_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.seo,
+      section: 'Grow',
     ),
     FeatureItem(
       id: 'trending',
       title: 'Trending Topics',
       subtitle: 'AI-powered trends',
       icon: Icons.trending_up_rounded,
-      color: AppColors.trendingAccent,
+      color: AppColors.primary,
       route: AppRoutes.trending,
+      section: 'Grow',
+    ),
+
+    // ── Content ─────────────────────────────────────────────
+    FeatureItem(
+      id: 'content',
+      title: 'Script Generator',
+      subtitle: 'Hook, content & CTA',
+      icon: Icons.article_outlined,
+      color: AppColors.primary,
+      route: AppRoutes.content,
+      section: 'Content',
     ),
     FeatureItem(
-      id: 'thumbnail',
-      title: 'Thumbnail Generator',
-      subtitle: 'AI thumbnail images',
-      icon: Icons.image_rounded,
-      color: AppColors.thumbnailAccent,
-      route: AppRoutes.thumbnail,
+      id: 'viral_ideas',
+      title: 'Viral Shorts Ideas',
+      subtitle: '20 viral content ideas',
+      icon: Icons.bolt_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.viralIdeas,
+      section: 'Content',
     ),
-    FeatureItem(
-      id: 'seo',
-      title: 'SEO Analysis',
-      subtitle: 'Analyze your Shorts',
-      icon: Icons.analytics_rounded,
-      color: AppColors.seoAccent,
-      route: AppRoutes.seo,
-    ),
+
+    // ── Not shown in grid (accessed from Profile) ───────────
     FeatureItem(
       id: 'history',
       title: 'History',
       subtitle: 'Saved generations',
       icon: Icons.history_rounded,
-      color: AppColors.historyAccent,
+      color: AppColors.primary,
       route: AppRoutes.history,
     ),
     FeatureItem(
@@ -92,7 +119,7 @@ class FeatureCatalog {
       title: 'Settings',
       subtitle: 'Theme & preferences',
       icon: Icons.settings_rounded,
-      color: AppColors.settingsAccent,
+      color: AppColors.primary,
       route: AppRoutes.settings,
     ),
   ];

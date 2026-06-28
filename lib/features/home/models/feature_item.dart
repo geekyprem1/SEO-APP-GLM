@@ -9,6 +9,7 @@ class FeatureItem {
     required this.icon,
     required this.color,
     required this.route,
+    this.section = 'Create',
   });
 
   final String id;
@@ -18,6 +19,9 @@ class FeatureItem {
   final Color color;
   final String route;
 
+  /// Group heading on the dashboard (Create / Grow / Content).
+  final String section;
+
   FeatureItem copyWith({String? title, String? subtitle}) {
     return FeatureItem(
       id: id,
@@ -26,6 +30,7 @@ class FeatureItem {
       icon: icon,
       color: color,
       route: route,
+      section: section,
     );
   }
 }

@@ -13,7 +13,8 @@ class HomeScreen extends ConsumerWidget {
     return const FeatureDashboard(
       format: ContentFormat.shorts,
       heading: 'ShortSEO AI',
-      subheading: 'Create viral YouTube Shorts content with AI',
+      subheading:
+          'Create viral YouTube Shorts with AI. Generate thumbnails, titles, hashtags, scripts and viral ideas.',
     );
   }
 }
