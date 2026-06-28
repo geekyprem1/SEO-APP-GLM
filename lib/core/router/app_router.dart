@@ -47,8 +47,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AppRoutes.login;
       }
 
-      // Authenticated but on splash/login → home.
-      if (isLoggedIn && isPublicRoute) {
+      // Returning authenticated user sitting on splash → home.
+      // (We intentionally allow logged-in guests to open /login so they can
+      // upgrade to a real account.)
+      if (isLoggedIn && isOnSplash) {
         return AppRoutes.home;
       }
 
