@@ -17,10 +17,8 @@ import '../../features/auth/repository/auth_repository.dart';
 
 /// Initializes Firebase and wires up all Firebase-backed providers.
 ///
-/// NOTE: Replace [FirebaseOptions] below with the generated config from
-/// `flutterfire configure` once a Firebase project is created.
-/// The placeholder below allows the app to compile; Firebase calls will fail
-/// at runtime until real config is provided.
+/// Config values come from the `short-seo-app` Firebase project
+/// (mirrors android/app/google-services.json).
 class FirebaseService {
   FirebaseService._();
 
@@ -28,11 +26,11 @@ class FirebaseService {
   static Future<List<Override>> initialize() async {
     await Firebase.initializeApp(
       options: const FirebaseOptions(
-        apiKey: 'AIza-placeholder-replace-with-flutterfire-configure',
-        appId: '1:000000000000:android:placeholder',
-        messagingSenderId: '000000000000',
-        projectId: 'shortseo-ai-dev',
-        storageBucket: 'shortseo-ai-dev.appspot.com',
+        apiKey: 'AIzaSyBw-SStswOtuUMyIbm6_LsQUdjfLncYm3w',
+        appId: '1:49047407805:android:7c0f8f5751698db91bfbd4',
+        messagingSenderId: '49047407805',
+        projectId: 'short-seo-app',
+        storageBucket: 'short-seo-app.firebasestorage.app',
       ),
     );
 

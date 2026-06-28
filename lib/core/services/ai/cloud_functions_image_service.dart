@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -37,7 +39,7 @@ class CloudFunctionsImageService implements ImageGenerationService {
         'cacheKey': request.cacheKey,
       });
 
-      final data = response.data as Map<String, dynamic>;
+      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
 
       final error = data['error'] as String?;
       if (error != null) {

@@ -29,7 +29,7 @@ class _ViralIdeasScreenState extends ConsumerState<ViralIdeasScreen> {
 
   Future<void> _generate() async {
     final state = ref.read(viralIdeasProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'viral_ideas_generate_tapped',
@@ -90,7 +90,7 @@ class _ViralIdeasScreenState extends ConsumerState<ViralIdeasScreen> {
                     AppButton(
                       label: 'Generate Ideas',
                       icon: Icons.local_fire_department_rounded,
-                      isLoading: ideasState.isLoading,
+                      isLoading: _hasGenerated && ideasState.isLoading,
                       onPressed: _generate,
                     ),
                   ],

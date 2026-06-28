@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -26,7 +28,7 @@ class CloudFunctionsYouTubeService implements YouTubeService {
         'videoUrlOrId': videoUrlOrId,
       });
 
-      final data = response.data as Map<String, dynamic>;
+      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
       _checkError(data);
       return _parseVideo(data['video'] as Map<String, dynamic>);
     } catch (e, st) {
@@ -43,7 +45,7 @@ class CloudFunctionsYouTubeService implements YouTubeService {
         'channelId': channelId,
       });
 
-      final data = response.data as Map<String, dynamic>;
+      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
       _checkError(data);
       return _parseChannel(data['channel'] as Map<String, dynamic>);
     } catch (e, st) {
@@ -64,7 +66,7 @@ class CloudFunctionsYouTubeService implements YouTubeService {
         'maxResults': maxResults,
       });
 
-      final data = response.data as Map<String, dynamic>;
+      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
       _checkError(data);
       final items = data['results'] as List<dynamic>? ?? [];
       return items

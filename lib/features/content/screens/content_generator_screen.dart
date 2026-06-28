@@ -8,8 +8,11 @@ import '../../../core/services/analytics_service.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/common/app_button.dart';
 import '../../../core/widgets/common/app_card.dart';
+import '../../../core/widgets/common/app_dropdown.dart';
 import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/generated_text_result.dart';
+import '../../../shared/catalogs/language_catalog.dart';
+import '../../../shared/models/language.dart';
 import '../providers/content_provider.dart';
 
 class ContentGeneratorScreen extends ConsumerStatefulWidget {
@@ -22,6 +25,7 @@ class ContentGeneratorScreen extends ConsumerStatefulWidget {
 class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen> {
   final _topicController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
 
   @override
@@ -33,12 +37,16 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
     final state = ref.read(contentProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
-    ref.read(analyticsServiceProvider).logEvent(name: 'content_generate_tapped');
+    ref.read(analyticsServiceProvider).logEvent(
+      name: 'content_generate_tapped',
+      parameters: {'language': _language.code},
+    );
     setState(() => _hasGenerated = true);
     await ref.read(contentProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
+          language: _language.name,
         );
   }
 
@@ -78,11 +86,21 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         textInputAction: TextInputAction.done,
                         validator: (v) => Validators.validateTopic(v, min: 3, max: 200, field: 'Topic'),
                       ),
+                      const SizedBox(height: AppSizes.md),
+                      AppDropdown<Language>(
+                        value: _language,
+                        items: LanguageCatalog.all,
+                        label: 'Language',
+                        itemLabel: (l) => l.name,
+                        onChanged: (v) {
+                          if (v != null) setState(() => _language = v);
+                        },
+                      ),
                       const SizedBox(height: AppSizes.lg),
                       AppButton(
                         label: 'Generate Content',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: contentState.isLoading,
+                        isLoading: _hasGenerated && contentState.isLoading,
                         onPressed: _generate,
                       ),
                     ],

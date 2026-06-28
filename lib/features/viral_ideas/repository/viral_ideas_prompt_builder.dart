@@ -25,7 +25,7 @@ Return JSON in this exact format:
       feature: AiFeature.viralIdeas,
       prompt: prompt.trim(),
       schema: schema,
-      maxTokens: 300,
+      maxTokens: 1000,
       temperature: 0.8,
     );
   }

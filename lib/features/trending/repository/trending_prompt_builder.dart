@@ -29,7 +29,7 @@ Return JSON in this exact format:
       feature: AiFeature.trending,
       prompt: prompt.trim(),
       schema: schema,
-      maxTokens: 300,
+      maxTokens: 800,
       temperature: 0.7,
     );
   }

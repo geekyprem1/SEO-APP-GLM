@@ -34,7 +34,7 @@ Return JSON in this exact format:
       feature: AiFeature.title,
       prompt: prompt.trim(),
       schema: schema,
-      maxTokens: 300,
+      maxTokens: 500,
       temperature: 0.7,
     );
   }

@@ -37,7 +37,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
   Future<void> _analyze() async {
     if (!_formKey.currentState!.validate()) return;
     final state = ref.read(seoProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'seo_analyze_tapped');
     setState(() => _hasGenerated = true);
@@ -85,7 +85,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
                       AppButton(
                         label: 'Analyze SEO',
                         icon: Icons.analytics_rounded,
-                        isLoading: seoState.isLoading,
+                        isLoading: _hasGenerated && seoState.isLoading,
                         onPressed: _analyze,
                       ),
                     ],

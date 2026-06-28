@@ -225,8 +225,10 @@ exports.analyzeSeo = onCall(
     // 1. Auth
     const uid = await verifyAuth(request);
 
-    // 2. Rate limit
-    await checkRateLimit(uid);
+    // NOTE: No rate limit here. SEO analysis makes two sequential calls
+    // (this YouTube metadata fetch + a generateContent AI call). Rate-limiting
+    // this cheap metadata fetch would always trip the limit on the following
+    // AI call. The AI call (generateContent) is rate-limited on its own.
 
     try {
       switch (action) {

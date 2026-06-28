@@ -7,9 +7,9 @@ class ContentPromptBuilder {
   static const String schema =
       '{"hook": "string", "mainContent": "string", "cta": "string"}';
 
-  static AiRequest build({required String topic}) {
+  static AiRequest build({required String topic, required String language}) {
     final prompt = '''
-You are a YouTube Shorts scriptwriter and SEO expert. Create a short-form video script for a YouTube Shorts about "$topic".
+You are a YouTube Shorts scriptwriter and SEO expert. Create a short-form video script for a YouTube Shorts about "$topic". Write the entire script (hook, main content, CTA) in $language.
 
 Structure the script in 3 parts:
 1. Hook — a 1–2 sentence attention grabber (first 3 seconds).
@@ -30,7 +30,7 @@ Return JSON in this exact format:
       feature: AiFeature.content,
       prompt: prompt.trim(),
       schema: schema,
-      maxTokens: 300,
+      maxTokens: 900,
       temperature: 0.7,
     );
   }

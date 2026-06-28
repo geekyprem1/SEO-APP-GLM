@@ -32,7 +32,7 @@ class _TrendingScreenState extends ConsumerState<TrendingScreen> {
 
   Future<void> _generate() async {
     final state = ref.read(trendingProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'trending_generate_tapped',
@@ -108,7 +108,7 @@ class _TrendingScreenState extends ConsumerState<TrendingScreen> {
                     AppButton(
                       label: 'Generate Topics',
                       icon: Icons.trending_up_rounded,
-                      isLoading: trendingState.isLoading,
+                      isLoading: _hasGenerated && trendingState.isLoading,
                       onPressed: _generate,
                     ),
                   ],

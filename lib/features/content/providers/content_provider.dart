@@ -12,10 +12,10 @@ class ContentNotifier extends StateNotifier<ContentState> {
   GeneratedContent? _lastResult;
   GeneratedContent? get lastResult => _lastResult;
 
-  Future<void> generate({required String topic}) async {
+  Future<void> generate({required String topic, required String language}) async {
     state = const AsyncValue.loading();
     try {
-      final result = await _repository.generate(topic: topic);
+      final result = await _repository.generate(topic: topic, language: language);
       _lastResult = result;
       state = AsyncValue.data(result);
     } catch (error, stack) {

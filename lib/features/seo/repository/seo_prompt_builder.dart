@@ -56,7 +56,7 @@ Return JSON in this exact format:
       feature: AiFeature.seo,
       prompt: prompt.trim(),
       schema: schema,
-      maxTokens: 300,
+      maxTokens: 600,
       temperature: 0.5, // Lower temperature for more consistent analysis
     );
   }

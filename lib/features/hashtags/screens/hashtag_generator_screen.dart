@@ -33,7 +33,7 @@ class _HashtagGeneratorScreenState extends ConsumerState<HashtagGeneratorScreen>
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
     final state = ref.read(hashtagProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'hashtag_generate_tapped');
     setState(() => _hasGenerated = true);
@@ -82,7 +82,7 @@ class _HashtagGeneratorScreenState extends ConsumerState<HashtagGeneratorScreen>
                       AppButton(
                         label: 'Generate Hashtags',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: hashtagState.isLoading,
+                        isLoading: _hasGenerated && hashtagState.isLoading,
                         onPressed: _generate,
                       ),
                     ],

@@ -47,7 +47,7 @@ class _ThumbnailGeneratorScreenState
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
     final state = ref.read(thumbnailProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'thumbnail_generate_tapped',
@@ -139,7 +139,7 @@ class _ThumbnailGeneratorScreenState
                       AppButton(
                         label: 'Generate Thumbnail',
                         icon: Icons.image_rounded,
-                        isLoading: thumbState.isLoading,
+                        isLoading: _hasGenerated && thumbState.isLoading,
                         onPressed: _generate,
                       ),
                     ],
@@ -214,19 +214,27 @@ class _ThumbnailGeneratorScreenState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          child: CachedNetworkImage(
-            imageUrl: thumbnail.imageUrl,
-            placeholder: (_, __) => Container(
-              height: 300,
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-            errorWidget: (_, __, ___) => Container(
-              height: 300,
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              child: const Center(child: Icon(Icons.broken_image_rounded, size: 48)),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 480),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+              // YouTube Shorts thumbnails are vertical 9:16.
+              child: AspectRatio(
+                aspectRatio: 9 / 16,
+                child: CachedNetworkImage(
+                  imageUrl: thumbnail.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (_, __, ___) => Container(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                    child: const Center(child: Icon(Icons.broken_image_rounded, size: 48)),
+                  ),
+                ),
+              ),
             ),
           ),
         ).animate().fadeIn(duration: 400.ms).scale(

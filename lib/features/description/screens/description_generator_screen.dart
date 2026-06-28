@@ -33,7 +33,7 @@ class _DescriptionGeneratorScreenState extends ConsumerState<DescriptionGenerato
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
     final state = ref.read(descriptionProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'description_generate_tapped');
     setState(() => _hasGenerated = true);
@@ -82,7 +82,7 @@ class _DescriptionGeneratorScreenState extends ConsumerState<DescriptionGenerato
                       AppButton(
                         label: 'Generate Description',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: descState.isLoading,
+                        isLoading: _hasGenerated && descState.isLoading,
                         onPressed: _generate,
                       ),
                     ],

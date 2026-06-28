@@ -49,7 +49,7 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
 
     // Prevent duplicate requests.
     final state = ref.read(titleProvider);
-    if (state.isLoading) return;
+    if (_hasGenerated && state.isLoading) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'title_generate_tapped',
@@ -120,7 +120,7 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
                       AppButton(
                         label: 'Generate Titles',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: titleState.isLoading,
+                        isLoading: _hasGenerated && titleState.isLoading,
                         onPressed: _generate,
                       ),
                     ],

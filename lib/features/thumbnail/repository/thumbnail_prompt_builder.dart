@@ -14,18 +14,22 @@ class ThumbnailPromptBuilder {
     required String category,
     required ThumbnailStyle style,
   }) {
+    // Note: do NOT mention "YouTube"/"Shorts"/"thumbnail" in the prompt —
+    // FLUX renders such words as literal text in the image. Aspect ratio is
+    // controlled via width/height, not the prompt.
     final prompt = '''
-YouTube Shorts thumbnail image, vertical 9:16 aspect ratio, about "$topic" in the "$category" niche.
+A visually striking vertical image about "$topic" in the "$category" niche.
 Style: ${style.label} — ${style.description}.
-Make it visually striking, high-contrast, with bold readable composition suitable for a short-form video thumbnail.
-No text overlays, no watermarks, no logos.
+High-contrast, bold dramatic composition with cinematic lighting and a clear focal subject.
+Absolutely no text, no letters, no words, no captions, no watermarks, no logos, no UI elements — image only.
 ''';
 
     return ImageRequest(
       feature: AiFeature.thumbnail,
       prompt: prompt.trim(),
-      width: 768,
-      height: 768,
+      // YouTube Shorts thumbnails are vertical 9:16 (720x1280).
+      width: 720,
+      height: 1280,
     );
   }
 }
