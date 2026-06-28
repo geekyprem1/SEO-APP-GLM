@@ -35,15 +35,7 @@ void main() async {
   // Initialize Firebase and get overrides.
   List<Override> overrides;
   try {
-    // Check if we should use No-Op mode (if config is still placeholder)
-    const isPlaceholder = String.fromEnvironment('USE_REAL_FIREBASE') != 'true';
-    
-    if (isPlaceholder) {
-      debugPrint('Using No-Op overrides (Firebase not configured).');
-      overrides = _noOpOverrides();
-    } else {
-      overrides = await FirebaseService.initialize();
-    }
+    overrides = await FirebaseService.initialize();
   } catch (e) {
     debugPrint('Firebase initialization failed: $e — using no-op overrides.');
     overrides = _noOpOverrides();
