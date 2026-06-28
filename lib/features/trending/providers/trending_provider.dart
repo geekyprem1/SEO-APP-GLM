@@ -1,14 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/models/content_format.dart';
 import '../models/trending_topics.dart';
 import '../repository/trending_repository.dart';
 
 typedef TrendingState = AsyncValue<TrendingTopics>;
 
 class TrendingNotifier extends StateNotifier<TrendingState> {
-  TrendingNotifier(this._repository) : super(const AsyncValue.loading());
+  TrendingNotifier(this._repository, this._ref) : super(const AsyncValue.loading());
 
   final TrendingRepository _repository;
+  final Ref _ref;
   TrendingTopics? _lastResult;
   TrendingTopics? get lastResult => _lastResult;
 
@@ -19,10 +21,12 @@ class TrendingNotifier extends StateNotifier<TrendingState> {
   }) async {
     state = const AsyncValue.loading();
     try {
+      final format = _ref.read(selectedFormatProvider);
       final result = await _repository.generate(
         category: category,
         country: country,
         language: language,
+        format: format,
       );
       _lastResult = result;
       state = AsyncValue.data(result);
@@ -50,5 +54,5 @@ class TrendingNotifier extends StateNotifier<TrendingState> {
 
 final trendingProvider =
     StateNotifierProvider<TrendingNotifier, TrendingState>((ref) {
-  return TrendingNotifier(ref.watch(trendingRepositoryProvider));
+  return TrendingNotifier(ref.watch(trendingRepositoryProvider), ref);
 });

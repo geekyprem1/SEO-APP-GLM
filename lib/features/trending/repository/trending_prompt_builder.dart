@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the Trending Topics feature.
 class TrendingPromptBuilder {
@@ -10,9 +11,11 @@ class TrendingPromptBuilder {
     required String category,
     required String country,
     required String language,
+    ContentFormat format = ContentFormat.shorts,
   }) {
+    final platform = format.isShorts ? 'YouTube Shorts' : 'YouTube long-form video';
     final prompt = '''
-You are a YouTube Shorts trends analyst. Generate a list of 15 currently trending topics in the "$category" niche for audiences in $country, in $language.
+You are a YouTube trends analyst. Generate a list of 15 currently trending $platform topics in the "$category" niche for audiences in $country, in $language.
 
 Rules:
 - Base topics on real trends, viral formats, and popular content patterns.

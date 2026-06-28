@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the Title Generator feature.
 ///
@@ -14,12 +15,15 @@ class TitlePromptBuilder {
   static AiRequest build({
     required String topic,
     required String language,
+    ContentFormat format = ContentFormat.shorts,
   }) {
+    final platform = format.isShorts ? 'YouTube Shorts video' : 'YouTube long-form video';
+    final limit = format.isShorts ? 70 : 100;
     final prompt = '''
-You are a YouTube Shorts SEO expert. Generate exactly 10 SEO-friendly, high-CTR titles for a YouTube Shorts video about "$topic" in $language.
+You are a YouTube SEO expert. Generate exactly 10 SEO-friendly, high-CTR titles for a $platform about "$topic" in $language.
 
 Rules:
-- Each title must be under 70 characters (YouTube title display limit).
+- Each title must be under $limit characters.
 - Use power words, curiosity hooks, and emotional triggers.
 - Include relevant keywords naturally.
 - Avoid clickbait that misleads.

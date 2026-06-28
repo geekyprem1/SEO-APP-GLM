@@ -7,11 +7,12 @@ import '../../../core/services/ai/ai_service.dart';
 import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_hashtag.dart';
 import 'hashtag_prompt_builder.dart';
 
 abstract class HashtagRepository {
-  Future<GeneratedHashtag> generate({required String topic});
+  Future<GeneratedHashtag> generate({required String topic, ContentFormat format});
   Future<void> saveToHistory(GeneratedHashtag hashtag);
 }
 
@@ -23,9 +24,9 @@ class HashtagRepositoryImpl implements HashtagRepository {
   final ErrorHandler _errorHandler;
 
   @override
-  Future<GeneratedHashtag> generate({required String topic}) async {
+  Future<GeneratedHashtag> generate({required String topic, ContentFormat format = ContentFormat.shorts}) async {
     try {
-      final request = HashtagPromptBuilder.build(topic: topic);
+      final request = HashtagPromptBuilder.build(topic: topic, format: format);
       final result = await _aiService.generate(request: request);
 
       if (result.json == null) {

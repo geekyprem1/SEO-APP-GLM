@@ -7,11 +7,12 @@ import '../../../core/services/ai/ai_service.dart';
 import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/viral_ideas.dart';
 import 'viral_ideas_prompt_builder.dart';
 
 abstract class ViralIdeasRepository {
-  Future<ViralIdeas> generate({required String category, required String language});
+  Future<ViralIdeas> generate({required String category, required String language, ContentFormat format});
   Future<void> saveToHistory(ViralIdeas ideas);
 }
 
@@ -23,9 +24,9 @@ class ViralIdeasRepositoryImpl implements ViralIdeasRepository {
   final ErrorHandler _errorHandler;
 
   @override
-  Future<ViralIdeas> generate({required String category, required String language}) async {
+  Future<ViralIdeas> generate({required String category, required String language, ContentFormat format = ContentFormat.shorts}) async {
     try {
-      final request = ViralIdeasPromptBuilder.build(category: category, language: language);
+      final request = ViralIdeasPromptBuilder.build(category: category, language: language, format: format);
       final result = await _aiService.generate(request: request);
 
       if (result.json == null) {

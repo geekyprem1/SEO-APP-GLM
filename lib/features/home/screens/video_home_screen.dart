@@ -4,16 +4,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/content_format.dart';
 import '../widgets/feature_dashboard.dart';
 
-/// Short tab dashboard — the 8 AI features in Shorts (vertical) mode.
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+/// Video tab dashboard — the 8 AI features in long-form (16:9) mode.
+class VideoHomeScreen extends ConsumerWidget {
+  const VideoHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return const FeatureDashboard(
-      format: ContentFormat.shorts,
-      heading: 'ShortSEO AI',
-      subheading: 'Create viral YouTube Shorts content with AI',
+      format: ContentFormat.longForm,
+      heading: 'VideoSEO AI',
+      subheading: 'Create high-ranking YouTube videos with AI',
     );
   }
 }

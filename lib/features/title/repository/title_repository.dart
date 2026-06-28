@@ -7,6 +7,7 @@ import '../../../core/services/ai/ai_service.dart';
 import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_title.dart';
 import 'title_prompt_builder.dart';
 
@@ -16,6 +17,7 @@ abstract class TitleRepository {
   Future<GeneratedTitle> generate({
     required String topic,
     required String language,
+    ContentFormat format,
   });
 
   /// Saves a generated title to history.
@@ -37,9 +39,10 @@ class TitleRepositoryImpl implements TitleRepository {
   Future<GeneratedTitle> generate({
     required String topic,
     required String language,
+    ContentFormat format = ContentFormat.shorts,
   }) async {
     try {
-      final request = TitlePromptBuilder.build(topic: topic, language: language);
+      final request = TitlePromptBuilder.build(topic: topic, language: language, format: format);
       final result = await _aiService.generate(request: request);
 
       // The AI should return JSON; if it didn't parse, throw.

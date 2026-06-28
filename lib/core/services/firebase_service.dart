@@ -17,22 +17,16 @@ import '../../features/auth/repository/auth_repository.dart';
 
 /// Initializes Firebase and wires up all Firebase-backed providers.
 ///
-/// Config values come from the `short-seo-app` Firebase project
-/// (mirrors android/app/google-services.json).
+/// On Android the native `google-services.json` (loaded by the
+/// `com.google.gms.google-services` Gradle plugin) supplies the config, so we
+/// initialize without inlining any keys into source — keeping config out of
+/// version control.
 class FirebaseService {
   FirebaseService._();
 
   /// Initializes Firebase and returns the provider overrides.
   static Future<List<Override>> initialize() async {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: 'AIzaSyBw-SStswOtuUMyIbm6_LsQUdjfLncYm3w',
-        appId: '1:49047407805:android:7c0f8f5751698db91bfbd4',
-        messagingSenderId: '49047407805',
-        projectId: 'short-seo-app',
-        storageBucket: 'short-seo-app.firebasestorage.app',
-      ),
-    );
+    await Firebase.initializeApp();
 
     // Crashlytics: record Flutter framework errors.
     final crashlytics = FirebaseCrashlytics.instance;

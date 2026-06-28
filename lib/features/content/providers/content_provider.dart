@@ -1,21 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/models/content_format.dart';
 import '../models/generated_content.dart';
 import '../repository/content_repository.dart';
 
 typedef ContentState = AsyncValue<GeneratedContent>;
 
 class ContentNotifier extends StateNotifier<ContentState> {
-  ContentNotifier(this._repository) : super(const AsyncValue.loading());
+  ContentNotifier(this._repository, this._ref) : super(const AsyncValue.loading());
 
   final ContentRepository _repository;
+  final Ref _ref;
   GeneratedContent? _lastResult;
   GeneratedContent? get lastResult => _lastResult;
 
   Future<void> generate({required String topic, required String language}) async {
     state = const AsyncValue.loading();
     try {
-      final result = await _repository.generate(topic: topic, language: language);
+      final format = _ref.read(selectedFormatProvider);
+      final result = await _repository.generate(topic: topic, language: language, format: format);
       _lastResult = result;
       state = AsyncValue.data(result);
     } catch (error, stack) {
@@ -42,5 +45,5 @@ class ContentNotifier extends StateNotifier<ContentState> {
 
 final contentProvider =
     StateNotifierProvider<ContentNotifier, ContentState>((ref) {
-  return ContentNotifier(ref.watch(contentRepositoryProvider));
+  return ContentNotifier(ref.watch(contentRepositoryProvider), ref);
 });

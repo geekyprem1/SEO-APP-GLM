@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the SEO Analysis feature.
 ///
@@ -14,7 +15,10 @@ class SeoPromptBuilder {
   ///
   /// [metadata] is the serialized YouTube video metadata (title, description,
   /// tags, viewCount, etc.) fetched via [YouTubeService].
-  static AiRequest build({required Map<String, dynamic> metadata}) {
+  static AiRequest build({
+    required Map<String, dynamic> metadata,
+    ContentFormat format = ContentFormat.shorts,
+  }) {
     final title = metadata['title'] ?? 'Unknown';
     final description = metadata['description'] ?? '';
     final tags = metadata['tags'] ?? const [];
@@ -22,9 +26,10 @@ class SeoPromptBuilder {
     final viewCount = metadata['viewCount'] ?? 0;
     final likeCount = metadata['likeCount'] ?? 0;
     final commentCount = metadata['commentCount'] ?? 0;
+    final platform = format.isShorts ? 'YouTube Shorts' : 'YouTube long-form video';
 
     final prompt = '''
-You are a YouTube Shorts SEO analyst. Analyze the following video metadata and provide an SEO score (0–100) and actionable improvement suggestions.
+You are a $platform SEO analyst. Analyze the following video metadata and provide an SEO score (0–100) and actionable improvement suggestions.
 
 Video Metadata:
 - Title: $title

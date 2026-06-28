@@ -7,6 +7,7 @@ import '../../../core/services/ai/ai_service.dart';
 import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/trending_topics.dart';
 import 'trending_prompt_builder.dart';
 
@@ -15,6 +16,7 @@ abstract class TrendingRepository {
     required String category,
     required String country,
     required String language,
+    ContentFormat format,
   });
   Future<void> saveToHistory(TrendingTopics topics);
 }
@@ -31,12 +33,14 @@ class TrendingRepositoryImpl implements TrendingRepository {
     required String category,
     required String country,
     required String language,
+    ContentFormat format = ContentFormat.shorts,
   }) async {
     try {
       final request = TrendingPromptBuilder.build(
         category: category,
         country: country,
         language: language,
+        format: format,
       );
       final result = await _aiService.generate(request: request);
 

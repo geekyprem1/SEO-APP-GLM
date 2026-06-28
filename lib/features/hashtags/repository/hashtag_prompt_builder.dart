@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the Hashtag Generator feature.
 class HashtagPromptBuilder {
@@ -6,9 +7,13 @@ class HashtagPromptBuilder {
 
   static const String schema = '{"hashtags": ["string", "string", ...]}';
 
-  static AiRequest build({required String topic}) {
+  static AiRequest build({
+    required String topic,
+    ContentFormat format = ContentFormat.shorts,
+  }) {
+    final platform = format.isShorts ? 'YouTube Shorts video' : 'YouTube long-form video';
     final prompt = '''
-You are a YouTube Shorts SEO expert. Generate exactly 20 relevant, high-reach hashtags for a YouTube Shorts video about "$topic".
+You are a YouTube SEO expert. Generate exactly 20 relevant, high-reach hashtags for a $platform about "$topic".
 
 Rules:
 - Mix broad (high volume) and niche (targeted) hashtags.

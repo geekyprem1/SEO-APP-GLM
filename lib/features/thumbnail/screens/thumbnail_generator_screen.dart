@@ -18,6 +18,7 @@ import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
 import '../../../shared/catalogs/category_catalog.dart';
 import '../../../shared/models/category.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_thumbnail.dart';
 import '../providers/thumbnail_provider.dart';
 
@@ -211,6 +212,8 @@ class _ThumbnailGeneratorScreenState
 
   Widget _buildImageResult(GeneratedThumbnail thumbnail) {
     final theme = Theme.of(context);
+    // Shorts → vertical 9:16; long-form video → horizontal 16:9.
+    final isShorts = ref.read(selectedFormatProvider).isShorts;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -219,9 +222,8 @@ class _ThumbnailGeneratorScreenState
             constraints: const BoxConstraints(maxHeight: 480),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-              // YouTube Shorts thumbnails are vertical 9:16.
               child: AspectRatio(
-                aspectRatio: 9 / 16,
+                aspectRatio: isShorts ? 9 / 16 : 16 / 9,
                 child: CachedNetworkImage(
                   imageUrl: thumbnail.imageUrl,
                   fit: BoxFit.cover,

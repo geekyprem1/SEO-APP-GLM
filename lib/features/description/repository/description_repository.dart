@@ -7,11 +7,12 @@ import '../../../core/services/ai/ai_service.dart';
 import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_description.dart';
 import 'description_prompt_builder.dart';
 
 abstract class DescriptionRepository {
-  Future<GeneratedDescription> generate({required String topic});
+  Future<GeneratedDescription> generate({required String topic, ContentFormat format});
   Future<void> saveToHistory(GeneratedDescription description);
 }
 
@@ -23,9 +24,9 @@ class DescriptionRepositoryImpl implements DescriptionRepository {
   final ErrorHandler _errorHandler;
 
   @override
-  Future<GeneratedDescription> generate({required String topic}) async {
+  Future<GeneratedDescription> generate({required String topic, ContentFormat format = ContentFormat.shorts}) async {
     try {
-      final request = DescriptionPromptBuilder.build(topic: topic);
+      final request = DescriptionPromptBuilder.build(topic: topic, format: format);
       final result = await _aiService.generate(request: request);
 
       if (result.json == null) {

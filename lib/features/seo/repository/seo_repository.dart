@@ -9,15 +9,16 @@ import '../../../core/services/youtube/cloud_functions_youtube_service.dart';
 import '../../../core/services/youtube/youtube_service.dart';
 import '../../../core/services/youtube/youtube_models.dart';
 import '../../../core/utils/validators.dart';
+import '../../../shared/models/content_format.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
 import '../models/seo_analysis.dart';
 import 'seo_prompt_builder.dart';
 
 abstract class SeoRepository {
-  /// Analyzes a YouTube Shorts video for SEO quality.
+  /// Analyzes a YouTube video for SEO quality.
   /// Fetches metadata via YouTubeService, then runs AI analysis.
-  Future<SeoAnalysis> analyze({required String videoUrl});
+  Future<SeoAnalysis> analyze({required String videoUrl, ContentFormat format});
 
   /// Saves an analysis to history.
   Future<void> saveToHistory(SeoAnalysis analysis);
@@ -37,7 +38,7 @@ class SeoRepositoryImpl implements SeoRepository {
   final ErrorHandler _errorHandler;
 
   @override
-  Future<SeoAnalysis> analyze({required String videoUrl}) async {
+  Future<SeoAnalysis> analyze({required String videoUrl, ContentFormat format = ContentFormat.shorts}) async {
     try {
       // 1. Extract video ID from URL.
       final videoId = Validators.extractVideoId(videoUrl);
@@ -65,7 +66,7 @@ class SeoRepositoryImpl implements SeoRepository {
       };
 
       // 4. Run AI analysis on the metadata.
-      final request = SeoPromptBuilder.build(metadata: metadata);
+      final request = SeoPromptBuilder.build(metadata: metadata, format: format);
       final result = await _aiService.generate(request: request);
 
       if (result.json == null) {

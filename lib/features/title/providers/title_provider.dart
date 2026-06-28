@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/models/content_format.dart';
 import '../models/generated_title.dart';
 import '../repository/title_repository.dart';
 
@@ -11,9 +12,10 @@ typedef TitleState = AsyncValue<GeneratedTitle>;
 
 /// Notifier that manages title generation state.
 class TitleNotifier extends StateNotifier<TitleState> {
-  TitleNotifier(this._repository) : super(const AsyncValue.loading());
+  TitleNotifier(this._repository, this._ref) : super(const AsyncValue.loading());
 
   final TitleRepository _repository;
+  final Ref _ref;
 
   /// The last successfully generated title (for Save action).
   GeneratedTitle? _lastResult;
@@ -26,7 +28,8 @@ class TitleNotifier extends StateNotifier<TitleState> {
   }) async {
     state = const AsyncValue.loading();
     try {
-      final result = await _repository.generate(topic: topic, language: language);
+      final format = _ref.read(selectedFormatProvider);
+      final result = await _repository.generate(topic: topic, language: language, format: format);
       _lastResult = result;
       state = AsyncValue.data(result);
     } catch (error, stack) {
@@ -56,5 +59,5 @@ class TitleNotifier extends StateNotifier<TitleState> {
 /// Provider for the Title Generator screen state.
 final titleProvider =
     StateNotifierProvider<TitleNotifier, TitleState>((ref) {
-  return TitleNotifier(ref.watch(titleRepositoryProvider));
+  return TitleNotifier(ref.watch(titleRepositoryProvider), ref);
 });

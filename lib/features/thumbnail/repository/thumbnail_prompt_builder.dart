@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_thumbnail.dart';
 
 /// Builds the image generation prompt for the Thumbnail Generator feature.
@@ -13,12 +14,20 @@ class ThumbnailPromptBuilder {
     required String topic,
     required String category,
     required ThumbnailStyle style,
+    ContentFormat format = ContentFormat.shorts,
   }) {
+    // Shorts thumbnails are vertical 9:16; long-form video thumbnails are
+    // horizontal 16:9.
+    final isShorts = format.isShorts;
+    final orientation = isShorts ? 'vertical' : 'horizontal';
+    final width = isShorts ? 720 : 1280;
+    final height = isShorts ? 1280 : 720;
+
     // Note: do NOT mention "YouTube"/"Shorts"/"thumbnail" in the prompt —
     // FLUX renders such words as literal text in the image. Aspect ratio is
     // controlled via width/height, not the prompt.
     final prompt = '''
-A visually striking vertical image about "$topic" in the "$category" niche.
+A visually striking $orientation image about "$topic" in the "$category" niche.
 Style: ${style.label} — ${style.description}.
 High-contrast, bold dramatic composition with cinematic lighting and a clear focal subject.
 Absolutely no text, no letters, no words, no captions, no watermarks, no logos, no UI elements — image only.
@@ -27,9 +36,8 @@ Absolutely no text, no letters, no words, no captions, no watermarks, no logos, 
     return ImageRequest(
       feature: AiFeature.thumbnail,
       prompt: prompt.trim(),
-      // YouTube Shorts thumbnails are vertical 9:16 (720x1280).
-      width: 720,
-      height: 1280,
+      width: width,
+      height: height,
     );
   }
 }

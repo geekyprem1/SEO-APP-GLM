@@ -1,14 +1,20 @@
 import '../../../core/services/ai/models.dart';
+import '../../../shared/models/content_format.dart';
 
-/// Builds the AI prompt for the Viral Shorts Ideas feature.
+/// Builds the AI prompt for the Viral Ideas feature.
 class ViralIdeasPromptBuilder {
   ViralIdeasPromptBuilder._();
 
   static const String schema = '{"ideas": ["string", "string", ...]}';
 
-  static AiRequest build({required String category, required String language}) {
+  static AiRequest build({
+    required String category,
+    required String language,
+    ContentFormat format = ContentFormat.shorts,
+  }) {
+    final platform = format.isShorts ? 'YouTube Shorts' : 'YouTube long-form video';
     final prompt = '''
-You are a YouTube Shorts content strategist. Generate exactly 20 viral content ideas for the "$category" niche in $language.
+You are a YouTube content strategist. Generate exactly 20 viral $platform content ideas for the "$category" niche in $language.
 
 Rules:
 - Each idea should be a specific, actionable video concept (not just a topic).

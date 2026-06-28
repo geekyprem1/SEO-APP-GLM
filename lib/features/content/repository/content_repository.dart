@@ -7,11 +7,12 @@ import '../../../core/services/ai/ai_service.dart';
 import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_content.dart';
 import 'content_prompt_builder.dart';
 
 abstract class ContentRepository {
-  Future<GeneratedContent> generate({required String topic, required String language});
+  Future<GeneratedContent> generate({required String topic, required String language, ContentFormat format});
   Future<void> saveToHistory(GeneratedContent content);
 }
 
@@ -23,9 +24,9 @@ class ContentRepositoryImpl implements ContentRepository {
   final ErrorHandler _errorHandler;
 
   @override
-  Future<GeneratedContent> generate({required String topic, required String language}) async {
+  Future<GeneratedContent> generate({required String topic, required String language, ContentFormat format = ContentFormat.shorts}) async {
     try {
-      final request = ContentPromptBuilder.build(topic: topic, language: language);
+      final request = ContentPromptBuilder.build(topic: topic, language: language, format: format);
       final result = await _aiService.generate(request: request);
 
       if (result.json == null) {

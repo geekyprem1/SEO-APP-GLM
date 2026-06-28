@@ -7,6 +7,7 @@ import '../../../core/services/ai/cloud_functions_image_service.dart';
 import '../../../core/services/ai/image_generation_service.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
+import '../../../shared/models/content_format.dart';
 import '../models/generated_thumbnail.dart';
 import 'thumbnail_prompt_builder.dart';
 
@@ -16,6 +17,7 @@ abstract class ThumbnailRepository {
     required String topic,
     required String category,
     required ThumbnailStyle style,
+    ContentFormat format,
   });
 
   /// Saves a generated thumbnail to history.
@@ -38,12 +40,14 @@ class ThumbnailRepositoryImpl implements ThumbnailRepository {
     required String topic,
     required String category,
     required ThumbnailStyle style,
+    ContentFormat format = ContentFormat.shorts,
   }) async {
     try {
       final request = ThumbnailPromptBuilder.build(
         topic: topic,
         category: category,
         style: style,
+        format: format,
       );
       final result = await _imageService.generateImage(request: request);
 

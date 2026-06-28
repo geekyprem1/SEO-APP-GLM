@@ -10,6 +10,10 @@ import '../models/feature_item.dart';
 class FeatureCatalog {
   FeatureCatalog._();
 
+  /// The 8 AI generation features shown in the Video/Short dashboard grids.
+  static List<FeatureItem> get generators =>
+      all.where((f) => f.id != 'history' && f.id != 'settings').toList();
+
   static const List<FeatureItem> all = [
     FeatureItem(
       id: 'title',

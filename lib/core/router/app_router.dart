@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../router/routes.dart';
+import '../navigation/main_shell.dart';
 import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/splash_screen.dart';
-import '../../features/home/screens/home_screen.dart';
 import '../../features/title/screens/title_generator_screen.dart';
 import '../../features/hashtags/screens/hashtag_generator_screen.dart';
 import '../../features/description/screens/description_generator_screen.dart';
@@ -68,7 +68,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.home,
         name: 'home',
-        builder: (context, state) => const HomeScreen(),
+        builder: (context, state) => const MainShell(),
       ),
       // Feature routes — point to ComingSoonScreen until each is implemented.
       GoRoute(

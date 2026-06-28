@@ -1,21 +1,24 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/models/content_format.dart';
 import '../models/generated_description.dart';
 import '../repository/description_repository.dart';
 
 typedef DescriptionState = AsyncValue<GeneratedDescription>;
 
 class DescriptionNotifier extends StateNotifier<DescriptionState> {
-  DescriptionNotifier(this._repository) : super(const AsyncValue.loading());
+  DescriptionNotifier(this._repository, this._ref) : super(const AsyncValue.loading());
 
   final DescriptionRepository _repository;
+  final Ref _ref;
   GeneratedDescription? _lastResult;
   GeneratedDescription? get lastResult => _lastResult;
 
   Future<void> generate({required String topic}) async {
     state = const AsyncValue.loading();
     try {
-      final result = await _repository.generate(topic: topic);
+      final format = _ref.read(selectedFormatProvider);
+      final result = await _repository.generate(topic: topic, format: format);
       _lastResult = result;
       state = AsyncValue.data(result);
     } catch (error, stack) {
@@ -42,5 +45,5 @@ class DescriptionNotifier extends StateNotifier<DescriptionState> {
 
 final descriptionProvider =
     StateNotifierProvider<DescriptionNotifier, DescriptionState>((ref) {
-  return DescriptionNotifier(ref.watch(descriptionRepositoryProvider));
+  return DescriptionNotifier(ref.watch(descriptionRepositoryProvider), ref);
 });
