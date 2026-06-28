@@ -1,3 +1,7 @@
+# Firebase config (sensitive — never commit)
+google-services.json
+GoogleService-Info.plist
+
 # Miscellaneous
 *.class
 *.log
