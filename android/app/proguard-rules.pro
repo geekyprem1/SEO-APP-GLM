@@ -17,6 +17,10 @@
 # Gal (gallery saver)
 -keep class com.gallery.** { *; }
 
+# Play Core (Flutter deferred components glue references these optional classes)
+-dontwarn com.google.android.play.core.**
+-keep class com.google.android.play.core.** { *; }
+
 # Don't warn about missing optional classes
 -dontwarn org.jetbrains.annotations.**
 -dontwarn javax.lang.model.element.**
