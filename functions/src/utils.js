@@ -12,16 +12,12 @@ if (admin.apps.length === 0) {
 
 const db = admin.firestore();
 
-// ─── Feature daily limits ────────────────────────────────────────────────
-const FEATURE_LIMITS = {
-  title: 20,
-  hashtag: 20,
-  description: 20,
-  content: 10,
-  viralIdeas: 20,
-  trending: 20,
-  seo: 10,
-  thumbnail: 3,
+// ─── Per-plan daily limits (per feature) ─────────────────────────────────
+// Free users get 1 generation per feature per day; Pro users get 50.
+// (These will be tuned later.)
+const PLAN_LIMITS = {
+  free: 1,
+  pro: 50,
 };
 
 // ─── Rate limiting (1 request per 5 seconds) ─────────────────────────────
@@ -74,22 +70,35 @@ async function checkRateLimit(uid) {
 }
 
 /**
- * Checks per-feature daily quota for the user.
+ * Returns the user's plan ('free' | 'pro'). Defaults to 'free'.
+ */
+async function getUserPlan(uid) {
+  const snap = await db.collection('users').doc(uid).get();
+  const plan = snap.exists ? snap.data().plan : 'free';
+  return plan === 'pro' ? 'pro' : 'free';
+}
+
+/**
+ * Checks per-feature daily quota for the user, based on their plan.
  * Returns current count.
  */
 async function checkQuota(uid, feature) {
+  const plan = await getUserPlan(uid);
+  const limit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+
   const dateKey = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
   const ref = db.collection('users').doc(uid).collection('usage').doc(dateKey);
   const snap = await ref.get();
 
   const current = snap.exists ? (snap.data()[feature] || 0) : 0;
-  const limit = FEATURE_LIMITS[feature] ?? 10;
 
   if (current >= limit) {
     throw new functionsHttpsError(
       'resource-exhausted',
-      `Daily limit for ${feature} reached. Try tomorrow.`,
-      { errorCode: 'QUOTA_EXCEEDED', feature }
+      plan === 'pro'
+        ? `Daily limit for ${feature} reached. Try tomorrow.`
+        : `Free limit reached. Upgrade to Pro for more.`,
+      { errorCode: 'QUOTA_EXCEEDED', feature, plan }
     );
   }
 
@@ -197,6 +206,7 @@ module.exports = {
   db,
   verifyAuth,
   checkRateLimit,
+  getUserPlan,
   checkQuota,
   incrementUsage,
   checkBudget,

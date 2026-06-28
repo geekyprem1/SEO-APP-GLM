@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../constants/app_sizes.dart';
 import '../../error/failures.dart';
+import '../../../features/pro/widgets/pro_upgrade_dialog.dart';
 
 /// A reusable error state with a friendly message and retry button.
+///
+/// For [QuotaExceededFailure] it shows a Pro upgrade prompt instead of Retry.
 class ErrorState extends StatelessWidget {
   const ErrorState({
     super.key,
@@ -17,6 +20,7 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isQuota = failure is QuotaExceededFailure;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.paddingXl),
@@ -24,9 +28,11 @@ class ErrorState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              _iconFor(failure),
+              isQuota ? Icons.workspace_premium_rounded : _iconFor(failure),
               size: 64,
-              color: theme.colorScheme.error.withValues(alpha: 0.6),
+              color: isQuota
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.error.withValues(alpha: 0.6),
             ),
             const SizedBox(height: AppSizes.md),
             Text(
@@ -34,7 +40,14 @@ class ErrorState extends StatelessWidget {
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
-            if (onRetry != null) ...[
+            if (isQuota) ...[
+              const SizedBox(height: AppSizes.lg),
+              FilledButton.icon(
+                onPressed: () => showProUpgradeDialog(context),
+                icon: const Icon(Icons.workspace_premium_rounded),
+                label: const Text('Upgrade to Pro'),
+              ),
+            ] else if (onRetry != null) ...[
               const SizedBox(height: AppSizes.lg),
               FilledButton.tonalIcon(
                 onPressed: onRetry,

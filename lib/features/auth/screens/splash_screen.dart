@@ -8,7 +8,8 @@ import '../../../core/constants/app_sizes.dart';
 import '../../../core/router/routes.dart';
 import '../providers/auth_provider.dart';
 
-/// Splash screen: shows branding → auto-signs-in anonymously → Home.
+/// Splash screen: shows branding → resolves session → Home (if signed in)
+/// or Login (if not).
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
@@ -22,18 +23,23 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Failsafe: if auth doesn't resolve in 3 seconds, try to force a check
+    // Failsafe: if auth doesn't resolve in 3 seconds, route based on current state.
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted && !_triggered) {
         final state = ref.read(authStateProvider);
         if (state is! AsyncLoading) {
           _handleAuth(state);
         } else {
-          // If still loading, force anonymous sign in
-          ref.read(authStateProvider.notifier).signInAnonymously();
+          _goLogin();
         }
       }
     });
+  }
+
+  void _goLogin() {
+    if (_triggered || !mounted) return;
+    _triggered = true;
+    context.go(AppRoutes.login);
   }
 
   void _handleAuth(AuthState state) {
@@ -41,18 +47,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
     state.when(
       data: (user) {
-        if (user != null) {
-          _triggered = true;
-          context.go(AppRoutes.home);
-        } else {
-          // User is null (signed out), trigger anonymous sign-in.
-          ref.read(authStateProvider.notifier).signInAnonymously();
-        }
+        _triggered = true;
+        context.go(user != null ? AppRoutes.home : AppRoutes.login);
       },
-      error: (error, stack) {
-        // On error, try anonymous sign-in as a fallback.
-        ref.read(authStateProvider.notifier).signInAnonymously();
-      },
+      error: (_, __) => _goLogin(),
       loading: () {},
     );
   }

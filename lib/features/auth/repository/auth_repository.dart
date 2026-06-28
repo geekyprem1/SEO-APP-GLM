@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as fb_auth;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../core/error/error_handler.dart';
 import '../../../core/error/failures.dart';
@@ -11,11 +12,17 @@ abstract class AuthRepository {
   /// Stream of the current auth state (null when signed out).
   Stream<AuthUser?> authStateChanges();
 
-  /// Signs in anonymously. Returns the resulting [AuthUser].
+  /// Signs in anonymously (Skip / guest).
   Future<AuthUser> signInAnonymously();
 
-  /// Signs in with Google. Returns the resulting [AuthUser].
+  /// Signs in with Google.
   Future<AuthUser> signInWithGoogle();
+
+  /// Signs in with email + password.
+  Future<AuthUser> signInWithEmail({required String email, required String password});
+
+  /// Creates a new account with email + password.
+  Future<AuthUser> signUpWithEmail({required String email, required String password});
 
   /// Signs out the current user.
   Future<void> signOut();
@@ -47,8 +54,6 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = credential.user!;
       await _ensureUserDoc(user);
       return _toAuthUser(user)!;
-    } on fb_auth.FirebaseAuthException catch (e, st) {
-      throw _errorHandler.convert(e, st);
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -57,12 +62,50 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<AuthUser> signInWithGoogle() async {
     try {
-      // GoogleSignIn is wired in the concrete provider; this base impl
-      // throws so that platforms without Google Sign-In configured fail loudly.
-      throw const FirebaseFailure(
-        message: 'Google Sign-In is not configured on this platform.',
-        code: 'GOOGLE_SIGN_IN_UNAVAILABLE',
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) {
+        // User cancelled the picker.
+        throw const CancelledFailure(message: 'Sign-in cancelled.');
+      }
+      final googleAuth = await googleUser.authentication;
+      final credential = fb_auth.GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
       );
+      final cred = await _auth.signInWithCredential(credential);
+      final user = cred.user!;
+      await _ensureUserDoc(user);
+      return _toAuthUser(user)!;
+    } catch (e, st) {
+      throw _errorHandler.convert(e, st);
+    }
+  }
+
+  @override
+  Future<AuthUser> signInWithEmail({required String email, required String password}) async {
+    try {
+      final cred = await _auth.signInWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final user = cred.user!;
+      await _ensureUserDoc(user);
+      return _toAuthUser(user)!;
+    } catch (e, st) {
+      throw _errorHandler.convert(e, st);
+    }
+  }
+
+  @override
+  Future<AuthUser> signUpWithEmail({required String email, required String password}) async {
+    try {
+      final cred = await _auth.createUserWithEmailAndPassword(
+        email: email.trim(),
+        password: password,
+      );
+      final user = cred.user!;
+      await _ensureUserDoc(user);
+      return _toAuthUser(user)!;
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -71,6 +114,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> signOut() async {
     try {
+      // Best-effort Google sign-out so the account picker shows next time.
+      try {
+        await GoogleSignIn().signOut();
+      } catch (_) {}
       await _auth.signOut();
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
@@ -88,6 +135,7 @@ class AuthRepositoryImpl implements AuthRepository {
         'displayName': user.displayName,
         'photoUrl': user.photoURL,
         'isAnonymous': user.isAnonymous,
+        'plan': 'free',
         'createdAt': FieldValue.serverTimestamp(),
         'lastSeen': FieldValue.serverTimestamp(),
       });

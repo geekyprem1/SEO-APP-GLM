@@ -17,4 +17,15 @@ class FeatureItem {
   final IconData icon;
   final Color color;
   final String route;
+
+  FeatureItem copyWith({String? title, String? subtitle}) {
+    return FeatureItem(
+      id: id,
+      title: title ?? this.title,
+      subtitle: subtitle ?? this.subtitle,
+      icon: icon,
+      color: color,
+      route: route,
+    );
+  }
 }

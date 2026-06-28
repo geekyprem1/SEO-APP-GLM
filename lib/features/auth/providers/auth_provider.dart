@@ -48,6 +48,28 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Signs in with email + password.
+  Future<void> signInWithEmail({required String email, required String password}) async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await _repository.signInWithEmail(email: email, password: password);
+      state = AsyncValue.data(user);
+    } catch (error, stack) {
+      state = AsyncValue.error(error, stack);
+    }
+  }
+
+  /// Creates a new account with email + password.
+  Future<void> signUpWithEmail({required String email, required String password}) async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await _repository.signUpWithEmail(email: email, password: password);
+      state = AsyncValue.data(user);
+    } catch (error, stack) {
+      state = AsyncValue.error(error, stack);
+    }
+  }
+
   /// Signs out.
   Future<void> signOut() async {
     try {

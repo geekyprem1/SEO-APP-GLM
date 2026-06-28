@@ -28,7 +28,14 @@ class FeatureDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final features = FeatureCatalog.generators;
+    // For the long-form Video tab, relabel shorts-specific wording.
+    final features = FeatureCatalog.generators.map((f) {
+      if (format.isShorts) return f;
+      return f.copyWith(
+        title: f.title.replaceAll('Shorts', 'Video'),
+        subtitle: f.subtitle.replaceAll('Shorts', 'Video'),
+      );
+    }).toList();
 
     return Scaffold(
       body: SafeArea(

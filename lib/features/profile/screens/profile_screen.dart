@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/utils/ui_utils.dart';
+import '../../../shared/models/user_plan.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../pro/widgets/pro_upgrade_dialog.dart';
 
-/// Profile tab — user info plus access to History, Settings, and sign out.
+/// Profile tab — user info, plan, plus access to History, Settings, sign out.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -14,6 +17,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = ref.watch(authStateProvider).valueOrNull;
+    final plan = ref.watch(userPlanProvider).valueOrNull ?? UserPlan.free;
 
     final isGuest = user?.isAnonymous ?? true;
     final name = (user?.displayName?.isNotEmpty ?? false)
@@ -65,7 +69,79 @@ class ProfileScreen extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppSizes.xl),
+            const SizedBox(height: AppSizes.lg),
+            // Plan card
+            Container(
+              padding: const EdgeInsets.all(AppSizes.paddingMd),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                color: plan.isPro
+                    ? theme.colorScheme.primaryContainer
+                    : theme.colorScheme.surface,
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        plan.isPro
+                            ? Icons.workspace_premium_rounded
+                            : Icons.person_outline_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: AppSizes.sm),
+                      Text('${plan.label} plan',
+                          style: theme.textTheme.titleSmall),
+                    ],
+                  ),
+                  if (plan.isFree) ...[
+                    const SizedBox(height: AppSizes.sm),
+                    Text(
+                      'Free: 1 generation per feature daily. Upgrade for 50/day.',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.md),
+                    FilledButton.icon(
+                      onPressed: () => showProUpgradeDialog(context),
+                      icon: const Icon(Icons.workspace_premium_rounded),
+                      label: const Text('Upgrade to Pro'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+                      ),
+                    ),
+                  ],
+                  // Hidden test toggle (temporary, until Play billing is wired).
+                  if (user != null) ...[
+                    const SizedBox(height: AppSizes.xs),
+                    TextButton(
+                      onPressed: () async {
+                        await setUserPlan(
+                          user.uid,
+                          plan.isPro ? UserPlan.free : UserPlan.pro,
+                        );
+                        if (context.mounted) {
+                          UiUtils.showSuccessSnackBar(
+                            context,
+                            plan.isPro ? 'Pro deactivated (test)' : 'Pro activated (test)',
+                          );
+                        }
+                      },
+                      child: Text(
+                        plan.isPro ? 'Deactivate Pro (test)' : 'Activate Pro (test)',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSizes.lg),
             // Menu
             _ProfileTile(
               icon: Icons.history_rounded,
@@ -84,9 +160,9 @@ class ProfileScreen extends ConsumerWidget {
             // Auth action
             if (isGuest)
               FilledButton.icon(
-                onPressed: () => ref.read(authStateProvider.notifier).signInWithGoogle(),
+                onPressed: () => context.push(AppRoutes.login),
                 icon: const Icon(Icons.login_rounded),
-                label: const Text('Sign in with Google'),
+                label: const Text('Sign in / Create account'),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
                 ),

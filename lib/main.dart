@@ -90,6 +90,12 @@ class _NoOpAuthRepository implements AuthRepository {
   Future<AuthUser> signInWithGoogle() async => _user;
 
   @override
+  Future<AuthUser> signInWithEmail({required String email, required String password}) async => _user;
+
+  @override
+  Future<AuthUser> signUpWithEmail({required String email, required String password}) async => _user;
+
+  @override
   Future<void> signOut() async {}
 
   @override

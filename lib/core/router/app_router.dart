@@ -42,9 +42,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return isOnSplash ? null : AppRoutes.splash;
       }
 
-      // Unauthenticated → splash (auto anonymous sign-in happens there).
+      // Unauthenticated on a protected route → login.
       if (!isLoggedIn && !isPublicRoute) {
-        return AppRoutes.splash;
+        return AppRoutes.login;
       }
 
       // Authenticated but on splash/login → home.
