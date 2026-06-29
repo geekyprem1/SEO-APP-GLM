@@ -40,6 +40,8 @@ const {
 
 // Admin console: role management (super_admin only).
 exports.setAdminRole = require('./admin').setAdminRole;
+// Account deletion (user deletes their own account — GDPR/Play).
+exports.deleteMyAccount = require('./admin').deleteMyAccount;
 
 const { generateText, DEFAULT_MODEL: TEXT_MODEL } = require('./openrouter');
 const { generateImage: generateImageReplicate, DEFAULT_MODEL: IMAGE_MODEL_REPLICATE } = require('./replicate');

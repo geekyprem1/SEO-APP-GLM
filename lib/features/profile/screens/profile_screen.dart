@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -116,28 +117,6 @@ class ProfileScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
-                  // Hidden test toggle (temporary, until Play billing is wired).
-                  if (user != null) ...[
-                    const SizedBox(height: AppSizes.xs),
-                    TextButton(
-                      onPressed: () async {
-                        await setUserPlan(
-                          user.uid,
-                          plan.isPro ? UserPlan.free : UserPlan.pro,
-                        );
-                        if (context.mounted) {
-                          UiUtils.showSuccessSnackBar(
-                            context,
-                            plan.isPro ? 'Pro deactivated (test)' : 'Pro activated (test)',
-                          );
-                        }
-                      },
-                      child: Text(
-                        plan.isPro ? 'Deactivate Pro (test)' : 'Activate Pro (test)',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -176,10 +155,47 @@ class ProfileScreen extends ConsumerWidget {
                   minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
                 ),
               ),
+            const SizedBox(height: AppSizes.sm),
+            TextButton.icon(
+              onPressed: () => _confirmDelete(context, ref),
+              icon: Icon(Icons.delete_outline_rounded, color: theme.colorScheme.error),
+              label: Text('Delete account',
+                  style: TextStyle(color: theme.colorScheme.error)),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+          'This permanently deletes your account and all your data. '
+          'This cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await FirebaseFunctions.instance.httpsCallable('deleteMyAccount').call();
+      await ref.read(authStateProvider.notifier).signOut();
+    } catch (e) {
+      if (context.mounted) {
+        UiUtils.showErrorSnackBar(context, 'Could not delete account. Please try again.');
+      }
+    }
   }
 }
 

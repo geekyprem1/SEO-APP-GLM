@@ -6,6 +6,13 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Release signing: load android/key.properties if present (kept out of git).
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 android {
     namespace = "com.shortseo.short_seo_ai"
     compileSdk = flutter.compileSdkVersion
@@ -28,12 +35,22 @@ android {
         versionName = "1.0.0"
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                keyAlias keystoreProperties["keyAlias"]
+                keyPassword keystoreProperties["keyPassword"]
+                storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null
+                storePassword keystoreProperties["storePassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Replace with your own release signing config before Play Store upload.
-            // Create a keystore: keytool -genkey -v -keystore ~/keystore/shortseo.jks -keyalg RSA -keysize 2048 -validity 10000 -alias shortseo
-            // Then add a signingConfig referencing it here.
-            signingConfig = signingConfigs.debug
+            // Uses the real upload key when android/key.properties exists,
+            // otherwise falls back to debug signing for local dev builds.
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled = true
             shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

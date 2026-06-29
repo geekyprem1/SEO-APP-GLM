@@ -3,17 +3,40 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Each user can read/write only their own user document and its subcollections.
+    // A user owns their profile doc but CANNOT set entitlement/abuse fields.
+    // plan, status, lifetime → server-only (Cloud Functions / Admin SDK).
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && request.auth.uid == userId;
 
-      match /{subColl=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      // On create, only allow a clean free profile (no self-granted plan/status).
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && (!('plan' in request.resource.data) || request.resource.data.plan == 'free')
+                    && (!('status' in request.resource.data) || request.resource.data.status == 'active')
+                    && !('lifetime' in request.resource.data);
+
+      // On update, the user may edit profile fields but never entitlement fields.
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                         .hasAny(['plan', 'status', 'lifetime']);
+
+      allow delete: if false; // deletion happens via deleteMyAccount Cloud Function
+
+      // Usage counters are written ONLY by Cloud Functions (Admin SDK).
+      // The client may read its own usage but never write it (anti quota-reset).
+      match /usage/{dateKey} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
+      }
+
+      // Any other subcollection: owner-readable, server-write only.
+      match /{subColl}/{docId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if false;
       }
     }
 
-    // Everything else is server-only (Cloud Functions use the Admin SDK,
-    // which bypasses these rules). Clients are denied by default.
+    // Everything else (admin collections, logs, cache, config, subscriptions,
+    // adminLogs, etc.) is server-only. Clients are denied by default.
     match /{document=**} {
       allow read, write: if false;
     }

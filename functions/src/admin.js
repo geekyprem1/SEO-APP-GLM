@@ -14,6 +14,22 @@ const { admin, db } = require('./utils');
 
 const ROLES = ['super_admin', 'admin', 'moderator', 'support'];
 
+/**
+ * deleteMyAccount — a signed-in user permanently deletes their own account.
+ * Removes the Firestore user doc (+ subcollections) and the Auth user. (GDPR)
+ */
+exports.deleteMyAccount = onCall({ timeoutSeconds: 60, memory: '256MiB' }, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+
+  // Recursively delete users/{uid} and all subcollections (usage, notes, ...).
+  await db.recursiveDelete(db.collection('users').doc(uid));
+  // Delete the auth account last.
+  await admin.auth().deleteUser(uid).catch(() => {});
+
+  return { ok: true };
+});
+
 exports.setAdminRole = onCall({ timeoutSeconds: 30, memory: '256MiB' }, async (request) => {
   const caller = request.auth;
   if (!caller) throw new HttpsError('unauthenticated', 'Sign in required.');
