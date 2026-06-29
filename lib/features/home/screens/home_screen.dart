@@ -12,7 +12,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return const FeatureDashboard(
       format: ContentFormat.shorts,
-      heading: 'ShortSEO AI',
+      heading: 'Tubora',
       subheading:
           'Create viral YouTube Shorts with AI. Generate thumbnails, titles, hashtags, scripts and viral ideas.',
     );

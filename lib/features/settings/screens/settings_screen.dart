@@ -168,7 +168,7 @@ class SettingsScreen extends ConsumerWidget {
             // Footer
             Center(
               child: Text(
-                'ShortSEO AI v${AppConstants.appVersion}',
+                'Tubora v${AppConstants.appVersion}',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                 ),

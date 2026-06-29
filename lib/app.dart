@@ -22,7 +22,7 @@ class ShortSeoApp extends ConsumerWidget {
     });
 
     return MaterialApp.router(
-      title: 'VideoSEO AI',
+      title: 'Tubora',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       // Premium light-first brand: lock to light until a designed dark theme

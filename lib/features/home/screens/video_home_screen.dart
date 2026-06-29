@@ -12,7 +12,7 @@ class VideoHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return const FeatureDashboard(
       format: ContentFormat.longForm,
-      heading: 'VideoSEO AI',
+      heading: 'Tubora',
       subheading:
           'Create better YouTube content with AI. Generate thumbnails, titles, descriptions, scripts and viral ideas.',
     );

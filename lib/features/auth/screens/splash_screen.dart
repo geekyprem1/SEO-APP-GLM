@@ -97,7 +97,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
             const SizedBox(height: AppSizes.lg),
             Text(
-              'ShortSEO AI - Booting...',
+              'Tubora',
               style: theme.textTheme.displayMedium?.copyWith(
                 color: AppColors.lightOnPrimary,
                 fontWeight: FontWeight.w700,
@@ -105,7 +105,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             ).animate().fadeIn(duration: 500.ms),
             const SizedBox(height: AppSizes.sm),
             Text(
-              'AI-Powered SEO for YouTube Shorts',
+              'AI-Powered SEO for YouTube',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppColors.lightOnPrimary.withValues(alpha: 0.8),
               ),

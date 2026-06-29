@@ -40,7 +40,7 @@ class ImageDownloadServiceImpl implements ImageDownloadService {
     );
 
     // Save to gallery.
-    await Gal.putImage(filePath, album: 'ShortSEO AI');
+    await Gal.putImage(filePath, album: 'Tubora');
     return true;
     } catch (_) {
       return false;

@@ -101,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ).animate().fadeIn(duration: 300.ms),
                 const SizedBox(height: AppSizes.xs),
                 Text(
-                  'ShortSEO AI — viral content, powered by AI',
+                  'Tubora — viral content, powered by AI',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
