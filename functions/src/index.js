@@ -38,6 +38,9 @@ const {
   ESTIMATED_COSTS,
 } = require('./utils');
 
+// Admin console: role management (super_admin only).
+exports.setAdminRole = require('./admin').setAdminRole;
+
 const { generateText, DEFAULT_MODEL: TEXT_MODEL } = require('./openrouter');
 const { generateImage: generateImageReplicate, DEFAULT_MODEL: IMAGE_MODEL_REPLICATE } = require('./replicate');
 const { generateImage: generateImageSiliconFlow, DEFAULT_MODEL: IMAGE_MODEL_SILICONFLOW } = require('./siliconflow');
