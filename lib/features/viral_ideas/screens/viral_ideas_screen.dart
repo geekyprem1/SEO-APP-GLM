@@ -12,6 +12,7 @@ import '../../../core/widgets/common/generated_list_result.dart';
 import '../../../shared/catalogs/category_catalog.dart';
 import '../../../shared/catalogs/language_catalog.dart';
 import '../../../shared/models/category.dart';
+import '../../../shared/models/content_format.dart';
 import '../../../shared/models/language.dart';
 import '../providers/viral_ideas_provider.dart';
 
@@ -46,6 +47,7 @@ class _ViralIdeasScreenState extends ConsumerState<ViralIdeasScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final ideasState = ref.watch(viralIdeasProvider);
+    final word = ref.watch(selectedFormatProvider).isShorts ? 'Shorts' : 'Video';
 
     return Scaffold(
       appBar: AppBar(
@@ -53,7 +55,7 @@ class _ViralIdeasScreenState extends ConsumerState<ViralIdeasScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
-        title: const Text('Viral Shorts Ideas'),
+        title: Text('Viral $word Ideas'),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

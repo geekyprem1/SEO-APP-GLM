@@ -36,6 +36,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.thumbnail,
       section: 'Create',
+      gradient: [Color(0xFFFF9D4D), Color(0xFFF4621E)],
     ),
     FeatureItem(
       id: 'title',
@@ -45,6 +46,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.title,
       section: 'Create',
+      gradient: [Color(0xFFFF6CAB), Color(0xFFD81B60)],
     ),
     FeatureItem(
       id: 'description',
@@ -54,6 +56,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.description,
       section: 'Create',
+      gradient: [Color(0xFF7C83FF), Color(0xFF4338CA)],
     ),
     FeatureItem(
       id: 'hashtags',
@@ -63,6 +66,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.hashtags,
       section: 'Create',
+      gradient: [Color(0xFF34D399), Color(0xFF059669)],
     ),
 
     // ── Grow ────────────────────────────────────────────────
@@ -74,6 +78,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.seo,
       section: 'Grow',
+      gradient: [Color(0xFF4F9DFF), Color(0xFF2563EB)],
     ),
     FeatureItem(
       id: 'trending',
@@ -83,6 +88,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.trending,
       section: 'Grow',
+      gradient: [Color(0xFF2DD4BF), Color(0xFF0D9488)],
     ),
 
     // ── Content ─────────────────────────────────────────────
@@ -94,6 +100,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.content,
       section: 'Content',
+      gradient: [Color(0xFFB06AF7), Color(0xFF7C3AED)],
     ),
     FeatureItem(
       id: 'viral_ideas',
@@ -103,6 +110,7 @@ class FeatureCatalog {
       color: AppColors.primary,
       route: AppRoutes.viralIdeas,
       section: 'Content',
+      gradient: [Color(0xFFFF5A5F), Color(0xFFE53935)],
     ),
 
     // ── Not shown in grid (accessed from Profile) ───────────

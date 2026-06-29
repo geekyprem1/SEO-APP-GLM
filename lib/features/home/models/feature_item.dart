@@ -10,6 +10,7 @@ class FeatureItem {
     required this.color,
     required this.route,
     this.section = 'Create',
+    this.gradient = const [Color(0xFFFF5A5F), Color(0xFFE53935)],
   });
 
   final String id;
@@ -22,6 +23,9 @@ class FeatureItem {
   /// Group heading on the dashboard (Create / Grow / Content).
   final String section;
 
+  /// Two-stop gradient for the premium card background.
+  final List<Color> gradient;
+
   FeatureItem copyWith({String? title, String? subtitle}) {
     return FeatureItem(
       id: id,
@@ -31,6 +35,7 @@ class FeatureItem {
       color: color,
       route: route,
       section: section,
+      gradient: gradient,
     );
   }
 }

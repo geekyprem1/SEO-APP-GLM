@@ -99,14 +99,21 @@ class _FeatureDashboardState extends ConsumerState<FeatureDashboard> {
                         ),
                       ),
                     ),
-                    ...entry.value.map((item) => Padding(
-                          padding: const EdgeInsets.only(bottom: AppSizes.sm + 4),
-                          child: FeatureCard(
-                            item: item,
-                            onTap: () => _open(item),
-                          ),
-                        )),
-                    const SizedBox(height: AppSizes.sm),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: AppSizes.md,
+                      crossAxisSpacing: AppSizes.md,
+                      childAspectRatio: 1.1,
+                      children: entry.value
+                          .map((item) => FeatureCard(
+                                item: item,
+                                onTap: () => _open(item),
+                              ))
+                          .toList(),
+                    ),
+                    const SizedBox(height: AppSizes.lg),
                   ]),
           ],
         ),

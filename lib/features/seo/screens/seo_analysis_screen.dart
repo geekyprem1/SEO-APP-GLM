@@ -14,6 +14,7 @@ import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
 import '../models/seo_analysis.dart';
+import '../../../shared/models/content_format.dart';
 import '../providers/seo_provider.dart';
 
 class SeoAnalysisScreen extends ConsumerStatefulWidget {
@@ -50,6 +51,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final seoState = ref.watch(seoProvider);
+    final word = ref.watch(selectedFormatProvider).isShorts ? 'Shorts' : 'Video';
 
     return Scaffold(
       appBar: AppBar(
@@ -71,11 +73,11 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Analyze your YouTube Shorts', style: theme.textTheme.titleMedium),
+                      Text('Analyze your YouTube $word', style: theme.textTheme.titleMedium),
                       const SizedBox(height: AppSizes.md),
                       AppTextField(
                         controller: _urlController,
-                        label: 'YouTube Shorts URL',
+                        label: 'YouTube $word URL',
                         hint: 'https://youtube.com/shorts/...',
                         keyboardType: TextInputType.url,
                         textInputAction: TextInputAction.done,
@@ -102,11 +104,12 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
   }
 
   Widget _buildResult(AsyncValue<SeoAnalysis> state) {
+    final word = ref.read(selectedFormatProvider).isShorts ? 'Shorts' : 'Video';
     if (!_hasGenerated) {
       return _EmptyState(
         icon: Icons.analytics_rounded,
         title: 'No analysis yet',
-        subtitle: 'Paste a YouTube Shorts URL and tap Analyze to get an SEO score and suggestions.',
+        subtitle: 'Paste a YouTube $word URL and tap Analyze to get an SEO score and suggestions.',
       );
     }
 
