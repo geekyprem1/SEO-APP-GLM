@@ -17,6 +17,7 @@
  */
 
 const OpenAI = require('openai');
+const logger = require('firebase-functions/logger');
 const { getConfigValue, DEFAULTS } = require('./config');
 
 const DEFAULT_MAX_TOKENS = 300;
@@ -64,26 +65,57 @@ async function generateText({ prompt, schema, maxTokens, temperature }) {
   });
 
   const rawText = completion.choices[0]?.message?.content ?? '';
+  const finishReason = completion.choices[0]?.finish_reason;
   let json = null;
 
   if (schema) {
-    try {
-      json = JSON.parse(rawText);
-    } catch {
-      const match = rawText.match(/\{[\s\S]*\}/);
-      if (match) {
-        try {
-          json = JSON.parse(match[0]);
-        } catch {
-          // Leave json null; caller handles.
-        }
-      }
+    json = extractJson(rawText);
+    if (json === null) {
+      logger.warn('Could not parse JSON from model output', {
+        model,
+        finishReason,
+        preview: rawText.slice(0, 300),
+      });
     }
   }
 
   const tokensUsed = completion.usage?.total_tokens ?? 0;
 
   return { rawText, json, tokensUsed, model };
+}
+
+/**
+ * Robustly extracts a JSON object from a model response.
+ * Handles ```json fences, leading/trailing prose, and stray whitespace.
+ * Returns null if no valid JSON object can be parsed.
+ */
+function extractJson(text) {
+  if (!text) return null;
+
+  // 1. Strip markdown code fences (```json ... ``` or ``` ... ```).
+  let cleaned = text.trim();
+  const fence = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence) cleaned = fence[1].trim();
+
+  // 2. Direct parse.
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // continue
+  }
+
+  // 3. Fallback: grab the outermost { ... } and parse.
+  const start = cleaned.indexOf('{');
+  const end = cleaned.lastIndexOf('}');
+  if (start !== -1 && end > start) {
+    try {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    } catch {
+      // continue
+    }
+  }
+
+  return null;
 }
 
 module.exports = { generateText, DEFAULT_MODEL: DEFAULTS.text_model };
