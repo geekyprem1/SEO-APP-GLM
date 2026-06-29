@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/widgets/common/app_card.dart';
 import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
 import '../../../core/widgets/common/shimmer_loading.dart';
+import '../../../core/widgets/common/success_reveal.dart';
 
 /// A reusable widget that displays a block of generated text with
 /// Copy/Share/Save actions. Used by Description and Content generators.
@@ -50,7 +52,7 @@ class GeneratedTextResult extends ConsumerWidget {
         failure: error is Failure ? error : const UnknownFailure(),
         onRetry: onRetry,
       ),
-      data: (_) => _buildContent(context),
+      data: (_) => SuccessReveal(child: _buildContent(context)),
     );
   }
 
@@ -111,9 +113,19 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 64, color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4)),
-            const SizedBox(height: AppSizes.md),
-            Text(title, style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: AppColors.primarySoft,
+                borderRadius: BorderRadius.circular(AppSizes.radiusXl),
+              ),
+              child: Icon(icon, size: 32, color: AppColors.primaryDark),
+            ),
+            const SizedBox(height: AppSizes.lg),
+            Text(title,
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                textAlign: TextAlign.center),
             const SizedBox(height: AppSizes.sm),
             Text(subtitle,
                 style: theme.textTheme.bodyMedium?.copyWith(

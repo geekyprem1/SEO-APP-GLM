@@ -10,6 +10,7 @@ import '../../../core/widgets/common/app_button.dart';
 import '../../../core/widgets/common/app_card.dart';
 import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/generated_list_result.dart';
+import '../../../core/widgets/common/prompt_suggestions.dart';
 import '../providers/hashtag_provider.dart';
 
 class HashtagGeneratorScreen extends ConsumerStatefulWidget {
@@ -77,6 +78,16 @@ class _HashtagGeneratorScreenState extends ConsumerState<HashtagGeneratorScreen>
                         maxLength: 120,
                         textInputAction: TextInputAction.done,
                         validator: (v) => Validators.validateTopic(v, field: 'Topic'),
+                      ),
+                      const SizedBox(height: AppSizes.md),
+                      PromptSuggestions(
+                        suggestions: const [
+                          'Gaming',
+                          'Fitness',
+                          'Comedy',
+                          'Travel',
+                        ],
+                        onSelected: (s) => setState(() => _topicController.text = s),
                       ),
                       const SizedBox(height: AppSizes.lg),
                       AppButton(

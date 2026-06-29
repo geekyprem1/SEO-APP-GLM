@@ -18,13 +18,13 @@ class ShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final baseColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4);
-    final highlightColor = theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.2);
+    const baseColor = Color(0xFFEFEFEF);
+    const highlightColor = Color(0xFFF8F8F8);
 
     return Shimmer.fromColors(
       baseColor: baseColor,
       highlightColor: highlightColor,
+      period: const Duration(milliseconds: 1400),
       child: Container(
         height: height,
         width: width,

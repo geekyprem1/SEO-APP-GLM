@@ -10,6 +10,7 @@ import '../../../core/widgets/common/app_button.dart';
 import '../../../core/widgets/common/app_card.dart';
 import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/generated_text_result.dart';
+import '../../../core/widgets/common/prompt_suggestions.dart';
 import '../providers/description_provider.dart';
 
 class DescriptionGeneratorScreen extends ConsumerStatefulWidget {
@@ -77,6 +78,16 @@ class _DescriptionGeneratorScreenState extends ConsumerState<DescriptionGenerato
                         maxLength: 200,
                         textInputAction: TextInputAction.done,
                         validator: (v) => Validators.validateTopic(v, min: 3, max: 200, field: 'Topic'),
+                      ),
+                      const SizedBox(height: AppSizes.md),
+                      PromptSuggestions(
+                        suggestions: const [
+                          'Horror story',
+                          'Tech review',
+                          'Travel vlog',
+                          'Product unboxing',
+                        ],
+                        onSelected: (s) => setState(() => _topicController.text = s),
                       ),
                       const SizedBox(height: AppSizes.lg),
                       AppButton(

@@ -26,6 +26,11 @@ ThemeData buildLightTheme() {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: AppColors.background,
     textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+    // Smooth fade page transitions across the whole app.
+    pageTransitionsTheme: const PageTransitionsTheme(builders: {
+      TargetPlatform.android: _FadePageTransitionsBuilder(),
+      TargetPlatform.iOS: _FadePageTransitionsBuilder(),
+    }),
     appBarTheme: AppBarTheme(
       centerTitle: false,
       elevation: 0,
@@ -123,9 +128,29 @@ ThemeData buildLightTheme() {
       ),
     ),
     dividerTheme: DividerThemeData(
-      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+      color: AppColors.divider,
       thickness: 1,
       space: 1,
     ),
   );
+}
+
+/// A clean cross-fade page transition (with a subtle scale) for a premium feel.
+class _FadePageTransitionsBuilder extends PageTransitionsBuilder {
+  const _FadePageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+    return FadeTransition(
+      opacity: curved,
+      child: child,
+    );
+  }
 }

@@ -11,6 +11,7 @@ import '../../../core/widgets/common/app_card.dart';
 import '../../../core/widgets/common/app_dropdown.dart';
 import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/generated_text_result.dart';
+import '../../../core/widgets/common/prompt_suggestions.dart';
 import '../../../shared/catalogs/language_catalog.dart';
 import '../../../shared/models/language.dart';
 import '../providers/content_provider.dart';
@@ -85,6 +86,16 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                         maxLength: 200,
                         textInputAction: TextInputAction.done,
                         validator: (v) => Validators.validateTopic(v, min: 3, max: 200, field: 'Topic'),
+                      ),
+                      const SizedBox(height: AppSizes.md),
+                      PromptSuggestions(
+                        suggestions: const [
+                          '5 productivity tips',
+                          'Morning routine',
+                          'Tech explainer',
+                          'Story time',
+                        ],
+                        onSelected: (s) => setState(() => _topicController.text = s),
                       ),
                       const SizedBox(height: AppSizes.md),
                       AppDropdown<Language>(

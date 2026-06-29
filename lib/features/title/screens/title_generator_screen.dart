@@ -14,6 +14,8 @@ import '../../../core/widgets/common/app_card.dart';
 import '../../../core/widgets/common/app_dropdown.dart';
 import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/empty_state.dart';
+import '../../../core/widgets/common/prompt_suggestions.dart';
+import '../../../core/widgets/common/success_reveal.dart';
 import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
 import '../../../core/widgets/common/shimmer_loading.dart';
@@ -107,6 +109,16 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
                         validator: (v) => Validators.validateTopic(v, field: 'Topic'),
                       ),
                       const SizedBox(height: AppSizes.md),
+                      PromptSuggestions(
+                        suggestions: const [
+                          'Horror story',
+                          'Tech review',
+                          'Daily motivation',
+                          'Cooking recipe',
+                        ],
+                        onSelected: (s) => setState(() => _topicController.text = s),
+                      ),
+                      const SizedBox(height: AppSizes.md),
                       AppDropdown<Language>(
                         value: _language,
                         items: LanguageCatalog.all,
@@ -154,7 +166,7 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
             : const UnknownFailure(),
         onRetry: _generate,
       ),
-      data: (title) => _buildTitleList(title),
+      data: (title) => SuccessReveal(child: _buildTitleList(title)),
     );
   }
 

@@ -16,6 +16,7 @@ import '../../../core/widgets/common/app_dropdown.dart';
 import '../../../core/widgets/common/app_text_field.dart';
 import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
+import '../../../core/widgets/common/success_reveal.dart';
 import '../../../shared/catalogs/category_catalog.dart';
 import '../../../shared/models/category.dart';
 import '../../../shared/models/content_format.dart';
@@ -172,7 +173,7 @@ class _ThumbnailGeneratorScreenState
         failure: error is Failure ? error : const UnknownFailure(),
         onRetry: _generate,
       ),
-      data: (thumbnail) => _buildImageResult(thumbnail),
+      data: (thumbnail) => SuccessReveal(child: _buildImageResult(thumbnail)),
     );
   }
 
