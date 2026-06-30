@@ -11,11 +11,11 @@ class AppException implements Exception {
 }
 
 class NetworkException extends AppException {
-  NetworkException([String message = 'No internet connection.']) : super(message, code: 'NETWORK');
+  NetworkException([super.message = 'No internet connection.']) : super(code: 'NETWORK');
 }
 
 class TimeoutException extends AppException {
-  TimeoutException([String message = 'Request timed out.']) : super(message, code: 'TIMEOUT');
+  TimeoutException([super.message = 'Request timed out.']) : super(code: 'TIMEOUT');
 }
 
 class ApiException extends AppException {
@@ -33,11 +33,11 @@ class QuotaExceededException extends AppException {
 }
 
 class BudgetExceededException extends AppException {
-  BudgetExceededException([String message = 'Daily limit reached.']) : super(message, code: 'BUDGET_EXCEEDED');
+  BudgetExceededException([super.message = 'Daily limit reached.']) : super(code: 'BUDGET_EXCEEDED');
 }
 
 class RateLimitException extends AppException {
-  RateLimitException([String message = 'Too many requests.']) : super(message, code: 'RATE_LIMIT');
+  RateLimitException([super.message = 'Too many requests.']) : super(code: 'RATE_LIMIT');
 }
 
 class ValidationException extends AppException {

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 part 'history_item.g.dart';
@@ -30,7 +29,6 @@ enum HistoryType {
 /// Hive adapters. The repository rehydrates the concrete model from
 /// [type] + [data] when opening a detail screen.
 @HiveType(typeId: 1)
-@immutable
 class HistoryItem extends HiveObject {
   HistoryItem({
     required this.id,

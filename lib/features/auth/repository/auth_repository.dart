@@ -51,9 +51,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<AuthUser> signInAnonymously() async {
     try {
       final credential = await _auth.signInAnonymously();
-      final user = credential.user!;
+      final user = _requireUser(credential);
       await _ensureUserDoc(user);
-      return _toAuthUser(user)!;
+      return _mapUser(user);
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -73,9 +73,9 @@ class AuthRepositoryImpl implements AuthRepository {
         idToken: googleAuth.idToken,
       );
       final cred = await _auth.signInWithCredential(credential);
-      final user = cred.user!;
+      final user = _requireUser(cred);
       await _ensureUserDoc(user);
-      return _toAuthUser(user)!;
+      return _mapUser(user);
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -88,9 +88,9 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email.trim(),
         password: password,
       );
-      final user = cred.user!;
+      final user = _requireUser(cred);
       await _ensureUserDoc(user);
-      return _toAuthUser(user)!;
+      return _mapUser(user);
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -103,9 +103,9 @@ class AuthRepositoryImpl implements AuthRepository {
         email: email.trim(),
         password: password,
       );
-      final user = cred.user!;
+      final user = _requireUser(cred);
       await _ensureUserDoc(user);
-      return _toAuthUser(user)!;
+      return _mapUser(user);
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -144,8 +144,22 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  AuthUser? _toAuthUser(fb_auth.User? user) {
-    if (user == null) return null;
+  /// Returns the [fb_auth.User] from a credential, or throws a typed failure.
+  /// `UserCredential.user` is nullable; a null here means sign-in reported
+  /// success but returned no user — an unexpected state we must not `!`-crash on.
+  fb_auth.User _requireUser(fb_auth.UserCredential credential) {
+    final user = credential.user;
+    if (user == null) {
+      throw const FirebaseFailure(
+        message: 'Sign-in failed. Please try again.',
+        code: 'no-user',
+      );
+    }
+    return user;
+  }
+
+  /// Maps a non-null Firebase user to the domain [AuthUser].
+  AuthUser _mapUser(fb_auth.User user) {
     return AuthUser(
       uid: user.uid,
       email: user.email,
@@ -155,6 +169,9 @@ class AuthRepositoryImpl implements AuthRepository {
       createdAt: user.metadata.creationTime ?? DateTime.now(),
     );
   }
+
+  AuthUser? _toAuthUser(fb_auth.User? user) =>
+      user == null ? null : _mapUser(user);
 }
 
 /// Provider for the [AuthRepository].

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_constants.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/services/privacy_consent.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../core/widgets/common/app_card.dart';
 import '../../history/providers/history_provider.dart';
@@ -108,6 +109,28 @@ class SettingsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: AppSizes.xl),
 
+            // Privacy section — analytics & crash reporting consent.
+            _SectionHeader(title: 'Privacy'),
+            const SizedBox(height: AppSizes.sm),
+            AppCard(
+              child: SwitchListTile(
+                value: ref.watch(privacyConsentProvider) == true,
+                onChanged: (v) =>
+                    ref.read(privacyConsentProvider.notifier).setConsent(v),
+                secondary: Icon(Icons.insights_rounded,
+                    color: theme.colorScheme.primary),
+                title: Text('Usage analytics & crash reports',
+                    style: theme.textTheme.bodyMedium),
+                subtitle: Text(
+                  'Share anonymous usage & crash data to help improve Tubora.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSizes.xl),
+
             // Data section
             _SectionHeader(title: 'Data'),
             const SizedBox(height: AppSizes.sm),
@@ -147,9 +170,9 @@ class SettingsScreen extends ConsumerWidget {
                   ),
                   const Divider(height: 1),
                   _SettingsTile(
-                    label: 'Terms of Service',
+                    label: 'Disclaimer',
                     icon: Icons.description_rounded,
-                    onTap: () => _launchUrl(context, AppConstants.termsUrl),
+                    onTap: () => _launchUrl(context, AppConstants.disclaimerUrl),
                   ),
                   const Divider(height: 1),
                   _SettingsTile(

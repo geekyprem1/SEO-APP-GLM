@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,15 +21,24 @@ import '../../features/history/screens/history_detail_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 
 /// Provides the GoRouter configuration.
-/// Watches the auth state to redirect unauthenticated users.
+///
+/// The router is built ONCE. We intentionally do NOT `ref.watch` the auth state
+/// here — watching would rebuild this provider and construct a brand-new
+/// GoRouter on every auth change, discarding navigation state. Instead a single
+/// [_AuthRefreshNotifier] bridges auth changes to `GoRouter`'s refreshListenable,
+/// which re-runs `redirect`; redirect reads the latest auth via `ref.read`.
 final appRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final refreshNotifier = _AuthRefreshNotifier(ref);
+  ref.onDispose(refreshNotifier.dispose);
 
   final router = GoRouter(
     initialLocation: AppRoutes.splash,
-    debugLogDiagnostics: true,
-    refreshListenable: _AuthRefreshNotifier(),
+    // Route logging only in debug — avoids leaking navigation state and route
+    // parameters (e.g. history item ids) to logcat in release builds.
+    debugLogDiagnostics: kDebugMode,
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       final isLoggedIn = authState.maybeWhen(
         data: (user) => user != null,
         orElse: () => false,
@@ -137,17 +147,27 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ),
   );
 
-  // Refresh the router whenever auth state changes.
-  ref.listen<AuthState>(authStateProvider, (_, __) {
-    router.refresh();
-  });
-
   return router;
 });
 
-/// A simple [ChangeNotifier] used as a [GoRouter.refreshListenable].
-/// The actual refresh is triggered via `ref.listen` above; this notifier
-/// is a placeholder to satisfy the API (can be removed in newer go_router).
+/// Bridges Riverpod auth-state changes to [GoRouter.refreshListenable].
+///
+/// Subscribes to [authStateProvider] and calls [notifyListeners] on each change,
+/// prompting GoRouter to re-evaluate `redirect`. The subscription is closed when
+/// the router provider is disposed (see `ref.onDispose`).
 class _AuthRefreshNotifier extends ChangeNotifier {
-  void notify() => notifyListeners();
+  _AuthRefreshNotifier(Ref ref) {
+    _subscription = ref.listen<AuthState>(
+      authStateProvider,
+      (_, __) => notifyListeners(),
+    );
+  }
+
+  late final ProviderSubscription<AuthState> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.close();
+    super.dispose();
+  }
 }

@@ -31,13 +31,14 @@ class CloudFunctionsAiService implements AiService {
   Future<AiResult> generate({required AiRequest request}) async {
     try {
     final callable = _functions.httpsCallable(AppConstants.generateContentFunction);
+      // NOTE: no cacheKey is sent — the server derives a uid-namespaced
+      // SHA-256 cache key itself. Client-supplied keys are never trusted.
       final response = await callable.call<dynamic>({
         'feature': request.feature.id,
         'prompt': request.prompt,
         'schema': request.schema,
         'maxTokens': request.maxTokens,
         'temperature': request.temperature,
-        'cacheKey': request.cacheKey,
       });
 
       // cloud_functions returns nested maps as Map<Object?, Object?> on

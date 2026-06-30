@@ -4,6 +4,7 @@
  */
 
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 
 // Initialize Firebase Admin once.
 if (admin.apps.length === 0) {
@@ -11,6 +12,31 @@ if (admin.apps.length === 0) {
 }
 
 const db = admin.firestore();
+
+// ─── Input validation limits ─────────────────────────────────────────────
+// Hard caps that bound cost/abuse regardless of what the client sends.
+const LIMITS = {
+  MAX_PROMPT_LENGTH: 4000,
+  MAX_SCHEMA_LENGTH: 1000,
+  TOKENS_MIN: 50,
+  TOKENS_MAX: 1000,
+  TEMP_MIN: 0,
+  TEMP_MAX: 2,
+  IMAGE_MIN: 256,
+  IMAGE_MAX: 1024,
+  MAX_QUERY_LENGTH: 200,
+  MAX_ID_LENGTH: 200,
+  RESULTS_MIN: 1,
+  RESULTS_MAX: 25,
+};
+
+// Allowlist of features the client may request. Anything else is rejected.
+const VALID_FEATURES = new Set([
+  'title', 'hashtag', 'description', 'content',
+  'viralIdeas', 'trending', 'seo', 'thumbnail',
+]);
+
+const VALID_SEO_ACTIONS = new Set(['fetchVideo', 'fetchChannel', 'search']);
 
 // ─── Per-plan daily limits (per feature) ─────────────────────────────────
 // Free users get 1 generation per feature per day; Pro users get 50.
@@ -48,9 +74,16 @@ async function verifyAuth(context) {
 
 /**
  * Checks rate limit: max 1 request per RATE_LIMIT_SECONDS per user.
+ *
+ * @param {string} uid   - authenticated user id
+ * @param {string} bucket - optional independent window (e.g. 'seo'). The SEO
+ *        flow makes a metadata fetch followed by a separate generateContent
+ *        call; giving SEO its own bucket protects the YouTube quota without
+ *        the two calls tripping each other on the shared default window.
  */
-async function checkRateLimit(uid) {
-  const ref = db.collection('rateLimits').doc(uid);
+async function checkRateLimit(uid, bucket = 'default') {
+  const docId = bucket === 'default' ? uid : `${uid}_${bucket}`;
+  const ref = db.collection('rateLimits').doc(docId);
   const snap = await ref.get();
   const now = Date.now();
 
@@ -201,6 +234,127 @@ async function logRequest({ uid, feature, model, tokens, cost, durationMs }) {
   });
 }
 
+// ─── Input validation + sanitization ─────────────────────────────────────
+
+function clamp(n, min, max) {
+  return Math.min(Math.max(n, min), max);
+}
+
+/**
+ * Validates + sanitizes a generateContent payload.
+ * Throws invalid-argument on malformed input; clamps numeric params.
+ * Returns ONLY the trusted, bounded fields.
+ */
+function validateGenerateContent(data) {
+  const { feature, prompt, schema, maxTokens, temperature } = data || {};
+
+  if (typeof feature !== 'string' || !VALID_FEATURES.has(feature)) {
+    throw functionsHttpsError('invalid-argument', 'Invalid feature.');
+  }
+  if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+    throw functionsHttpsError('invalid-argument', 'Prompt is required.');
+  }
+  if (prompt.length > LIMITS.MAX_PROMPT_LENGTH) {
+    throw functionsHttpsError('invalid-argument', 'Prompt is too long.');
+  }
+  if (schema != null) {
+    if (typeof schema !== 'string' || schema.length > LIMITS.MAX_SCHEMA_LENGTH) {
+      throw functionsHttpsError('invalid-argument', 'Invalid schema.');
+    }
+  }
+
+  const safeMaxTokens = Number.isFinite(maxTokens)
+    ? clamp(Math.trunc(maxTokens), LIMITS.TOKENS_MIN, LIMITS.TOKENS_MAX)
+    : 300;
+  const safeTemperature = Number.isFinite(temperature)
+    ? clamp(temperature, LIMITS.TEMP_MIN, LIMITS.TEMP_MAX)
+    : 0.7;
+
+  return {
+    feature,
+    prompt,
+    schema: schema || null,
+    maxTokens: safeMaxTokens,
+    temperature: safeTemperature,
+  };
+}
+
+/**
+ * Validates + sanitizes a generateImage payload.
+ * Throws invalid-argument on malformed input; clamps image dimensions.
+ */
+function validateGenerateImage(data) {
+  const { feature, prompt, width, height } = data || {};
+
+  if (typeof feature !== 'string' || !VALID_FEATURES.has(feature)) {
+    throw functionsHttpsError('invalid-argument', 'Invalid feature.');
+  }
+  if (typeof prompt !== 'string' || prompt.trim().length === 0) {
+    throw functionsHttpsError('invalid-argument', 'Prompt is required.');
+  }
+  if (prompt.length > LIMITS.MAX_PROMPT_LENGTH) {
+    throw functionsHttpsError('invalid-argument', 'Prompt is too long.');
+  }
+
+  const safeWidth = Number.isFinite(width)
+    ? clamp(Math.trunc(width), LIMITS.IMAGE_MIN, LIMITS.IMAGE_MAX)
+    : 768;
+  const safeHeight = Number.isFinite(height)
+    ? clamp(Math.trunc(height), LIMITS.IMAGE_MIN, LIMITS.IMAGE_MAX)
+    : 768;
+
+  return { feature, prompt, width: safeWidth, height: safeHeight };
+}
+
+/**
+ * Validates + sanitizes an analyzeSeo payload.
+ * Throws invalid-argument on malformed input; clamps maxResults.
+ */
+function validateAnalyzeSeo(data) {
+  const { action, videoUrlOrId, channelId, query, maxResults } = data || {};
+
+  if (typeof action !== 'string' || !VALID_SEO_ACTIONS.has(action)) {
+    throw functionsHttpsError('invalid-argument', 'Invalid action.');
+  }
+
+  const out = { action };
+  if (action === 'fetchVideo') {
+    if (typeof videoUrlOrId !== 'string' || videoUrlOrId.trim().length === 0 ||
+        videoUrlOrId.length > LIMITS.MAX_ID_LENGTH) {
+      throw functionsHttpsError('invalid-argument', 'Invalid video reference.');
+    }
+    out.videoUrlOrId = videoUrlOrId.trim();
+  } else if (action === 'fetchChannel') {
+    if (typeof channelId !== 'string' || channelId.trim().length === 0 ||
+        channelId.length > LIMITS.MAX_ID_LENGTH) {
+      throw functionsHttpsError('invalid-argument', 'Invalid channel id.');
+    }
+    out.channelId = channelId.trim();
+  } else { // 'search'
+    if (typeof query !== 'string' || query.trim().length === 0 ||
+        query.length > LIMITS.MAX_QUERY_LENGTH) {
+      throw functionsHttpsError('invalid-argument', 'Invalid query.');
+    }
+    out.query = query.trim();
+    out.maxResults = Number.isFinite(maxResults)
+      ? clamp(Math.trunc(maxResults), LIMITS.RESULTS_MIN, LIMITS.RESULTS_MAX)
+      : 10;
+  }
+  return out;
+}
+
+/**
+ * Builds a server-side SHA-256 cache key, namespaced by uid.
+ * The client NEVER supplies the cache key — this prevents cross-user cache
+ * sharing, quota bypass, and cache poisoning.
+ */
+function buildCacheKey(uid, parts) {
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify({ uid, ...parts }))
+    .digest('hex');
+}
+
 module.exports = {
   admin,
   db,
@@ -215,6 +369,10 @@ module.exports = {
   setCache,
   logRequest,
   ESTIMATED_COSTS,
+  validateGenerateContent,
+  validateGenerateImage,
+  validateAnalyzeSeo,
+  buildCacheKey,
 };
 
 // Helper to create HttpsError without importing functions in utils.

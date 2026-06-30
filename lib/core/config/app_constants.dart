@@ -28,11 +28,15 @@ class AppConstants {
   // Pagination
   static const int defaultPageSize = 20;
 
-  // External links
+  // External links (live on the Tubora marketing site).
+  // Apex domain (no `www.`): the site is published on GitHub Pages with the
+  // custom domain `tubora.online`, and the `www.` host does not resolve. The
+  // privacy URL MUST be publicly reachable or Google Play rejects the listing.
   static const String privacyPolicyUrl =
-      'https://shortseo.ai/privacy-policy';
-  static const String termsUrl = 'https://shortseo.ai/terms';
-  static const String contactEmail = 'support@shortseo.ai';
+      'https://tubora.online/privacy.html';
+  static const String disclaimerUrl =
+      'https://tubora.online/disclaimer.html';
+  static const String contactEmail = 'geekyprem4@gmail.com';
 
   // Cloud Functions
   static const String generateContentFunction = 'generateContent';

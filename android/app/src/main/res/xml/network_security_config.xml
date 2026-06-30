@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Network Security Config for Tubora.
+
+  - cleartextTrafficPermitted="false": blocks all plaintext HTTP app-wide.
+    Every endpoint (Firebase, Cloud Functions, image CDNs, YouTube oEmbed) is
+    HTTPS, so no cleartext is ever needed.
+  - trust-anchors = system only: user-installed CA certificates are NOT trusted.
+    This hardens against MITM via a malicious proxy cert added to the user's
+    trust store (a common interception technique on rooted/compromised devices).
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

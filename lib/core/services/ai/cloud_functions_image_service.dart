@@ -31,12 +31,13 @@ class CloudFunctionsImageService implements ImageGenerationService {
   Future<ImageResult> generateImage({required ImageRequest request}) async {
     try {
     final callable = _functions.httpsCallable(AppConstants.generateImageFunction);
+      // NOTE: no cacheKey is sent — the server derives a uid-namespaced
+      // SHA-256 cache key itself. Client-supplied keys are never trusted.
       final response = await callable.call<dynamic>({
         'feature': request.feature.id,
         'prompt': request.prompt,
         'width': request.width,
         'height': request.height,
-        'cacheKey': request.cacheKey,
       });
 
       final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;

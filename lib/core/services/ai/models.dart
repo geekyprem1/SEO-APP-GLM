@@ -48,10 +48,6 @@ class AiRequest {
 
   /// Sampling temperature. Default 0.7.
   final double temperature;
-
-  /// A cache key derived from feature + prompt + params.
-  /// Same inputs → same key → cached result returned.
-  String get cacheKey => '${feature.id}:${prompt.hashCode}:${maxTokens}:$temperature';
 }
 
 /// The result of an AI generation call.
@@ -91,8 +87,6 @@ class ImageRequest {
   final String prompt;
   final int width;
   final int height;
-
-  String get cacheKey => '${feature.id}:${prompt.hashCode}:$width:$height';
 }
 
 /// The result of an image generation call.

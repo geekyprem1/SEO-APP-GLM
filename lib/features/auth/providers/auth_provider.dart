@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/auth_user.dart';
 import '../repository/auth_repository.dart';
 
-/// The auth state: AsyncValue<AuthUser?> where null = signed out.
+/// The auth state: `AsyncValue<AuthUser?>` where null = signed out.
 /// States: loading (initial), data(user) = authenticated, data(null) = unauthenticated.
 typedef AuthState = AsyncValue<AuthUser?>;
 
@@ -81,12 +81,12 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
   }
 }
 
-/// Provides the auth state as an AsyncValue<AuthUser?>.
+/// Provides the auth state as an `AsyncValue<AuthUser?>`.
 final authStateProvider = StateNotifierProvider<AuthStateNotifier, AuthState>(
   (ref) => AuthStateNotifier(ref.watch(authRepositoryProvider)),
 );
 
-/// Convenience extension for checking auth status on AsyncValue<AuthUser?>.
+/// Convenience extension for checking auth status on `AsyncValue<AuthUser?>`.
 extension AuthStateX on AuthState {
   /// True when the state holds a non-null user.
   bool get isAuthenticated => maybeWhen(

@@ -35,22 +35,21 @@ jobs:
       - name: Get Flutter dependencies
         run: flutter pub get
 
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Run tests
+        run: flutter test
+
+      # Release AAB is built & signed locally (needs the upload keystore, which
+      # is intentionally kept out of CI). CI only builds the debug APK as a
+      # sanity check; the signed release is uploaded to Play from a dev machine.
       - name: Build Debug APK
         run: flutter build apk --debug
-
-      - name: Build Release AAB
-        run: flutter build appbundle --release
 
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
-          retention-days: 7
-
-      - name: Upload Release AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-aab
-          path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 7

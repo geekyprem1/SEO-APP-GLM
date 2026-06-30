@@ -26,23 +26,19 @@ class FirebaseService {
   FirebaseService._();
 
   /// Initializes Firebase and returns the provider overrides.
-  static Future<List<Override>> initialize() async {
+  ///
+  /// [analyticsConsent] reflects the user's stored choice (null = undecided).
+  /// Collection is enabled ONLY when the user has explicitly allowed it, so
+  /// nothing is sent to Analytics/Crashlytics before consent (opt-in).
+  static Future<List<Override>> initialize({bool? analyticsConsent}) async {
     await Firebase.initializeApp();
 
-    // App Check: attest requests to the backend so off-device scripts can't
-    // abuse the AI endpoints. Debug provider locally; Play Integrity in release.
-    // (Enforcement is flipped on per-API in the Firebase App Check console.)
-    try {
-      await FirebaseAppCheck.instance.activate(
-        androidProvider:
-            kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
-      );
-    } catch (_) {
-      // Non-fatal: app still works while App Check is being configured.
-    }
+    final collectionAllowed = analyticsConsent == true;
 
-    // Crashlytics: record Flutter framework errors.
+    // Crashlytics first so App Check activation failures can be reported.
     final crashlytics = FirebaseCrashlytics.instance;
+    // Honour consent: no crash data leaves the device until the user opts in.
+    await crashlytics.setCrashlyticsCollectionEnabled(collectionAllowed);
     FlutterError.onError = crashlytics.recordFlutterFatalError;
     // Pass all uncaught async errors to Crashlytics.
     PlatformDispatcher.instance.onError = (error, stack) {
@@ -50,10 +46,39 @@ class FirebaseService {
       return true;
     };
 
+    // App Check: attest requests to the backend so off-device scripts can't
+    // abuse the AI endpoints. Play Integrity in release; debug provider locally.
+    // (Enforcement is flipped on per-API in the Firebase App Check console.)
+    //
+    // Play Integrity ONLY succeeds for builds installed from Google Play. A
+    // sideloaded release APK (direct install) cannot attest, which can stall
+    // Firebase calls. For local release testing, disable via:
+    //   flutter build apk --release --dart-define=ENABLE_APP_CHECK=false
+    // The default is true, so Play Store / CI production builds keep App Check.
+    const appCheckEnabled =
+        bool.fromEnvironment('ENABLE_APP_CHECK', defaultValue: true);
+    if (appCheckEnabled) {
+      try {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider:
+              kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+        );
+        // Keep a fresh attestation token so backend enforcement doesn't reject
+        // calls mid-session once App Check enforcement is enabled.
+        await FirebaseAppCheck.instance.setTokenAutoRefreshEnabled(true);
+      } catch (e, st) {
+        // Non-fatal so the app still launches, but DO surface it: a misconfigured
+        // Play Integrity attestation must be visible, not silently disabled.
+        await crashlytics.recordError(e, st, reason: 'AppCheck.activate failed');
+      }
+    }
+
     final auth = fb_auth.FirebaseAuth.instance;
     final firestore = FirebaseFirestore.instance;
     final functions = FirebaseFunctions.instance;
     final analytics = FirebaseAnalytics.instance;
+    // Honour consent: analytics collection stays off until the user opts in.
+    await analytics.setAnalyticsCollectionEnabled(collectionAllowed);
 
     return [
       authRepositoryProvider.overrideWith(

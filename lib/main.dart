@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -5,6 +6,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
 import 'core/config/app_constants.dart';
 import 'core/providers/core_providers.dart';
+import 'core/services/privacy_consent.dart';
+import 'core/storage/hive_encryption.dart';
 import 'core/services/ai/ai_service.dart';
 import 'core/services/ai/cloud_functions_ai_service.dart';
 import 'core/services/ai/image_generation_service.dart';
@@ -29,15 +32,42 @@ void main() async {
   await Hive.initFlutter();
   Hive.registerAdapter(HistoryTypeAdapter());
   Hive.registerAdapter(HistoryItemAdapter());
-  final historyBox = await Hive.openBox<HistoryItem>(AppConstants.historyBox);
-  final settingsBox = await Hive.openBox(AppConstants.settingsBox);
+
+  // Encrypt every box at rest with an AES key held in the platform secure
+  // store. migrateIfNeeded() converts any pre-existing plaintext boxes from
+  // older builds before we open them encrypted, so no user data is lost.
+  final hiveEnc = HiveEncryption.instance;
+  await hiveEnc.migrateIfNeeded(
+    const [AppConstants.historyBox, AppConstants.settingsBox],
+  );
+  final cipher = await hiveEnc.cipher();
+
+  final historyBox = await Hive.openBox<HistoryItem>(
+    AppConstants.historyBox,
+    encryptionCipher: cipher,
+  );
+  final settingsBox = await Hive.openBox(
+    AppConstants.settingsBox,
+    encryptionCipher: cipher,
+  );
+
+  // Read the stored analytics/crash-reporting consent (null = not asked yet)
+  // so Firebase starts with collection in the user's chosen state.
+  final analyticsConsent =
+      settingsBox.get(PrivacyConsentNotifier.storageKey) as bool?;
 
   // Initialize Firebase and get overrides.
   List<Override> overrides;
   try {
-    overrides = await FirebaseService.initialize();
+    overrides = await FirebaseService.initialize(
+      analyticsConsent: analyticsConsent,
+    );
   } catch (e) {
-    debugPrint('Firebase initialization failed: $e — using no-op overrides.');
+    // debugPrint still writes to logcat in release; guard it so init details
+    // never leak in production builds.
+    if (kDebugMode) {
+      debugPrint('Firebase initialization failed: $e — using no-op overrides.');
+    }
     overrides = _noOpOverrides();
   }
 

@@ -10,6 +10,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Required by the Flutter framework font manifest (CupertinoIcons family);
+  # omitting it triggers a missing-font warning on release builds.
   cupertino_icons: ^1.0.8
 
   # State management & routing
@@ -22,6 +24,8 @@ dependencies:
   # Local storage
   hive: ^2.2.3
   hive_flutter: ^1.1.0
+  flutter_secure_storage: ^9.2.2
+  path_provider: ^2.1.4
 
   # Firebase
   firebase_core: ^3.3.0
@@ -31,26 +35,18 @@ dependencies:
   firebase_crashlytics: ^4.1.0
   cloud_functions: ^5.0.0
   google_sign_in: ^6.2.1
-  firebase_storage: ^12.0.0
   firebase_app_check: ^0.3.1
-
-  # Models / codegen
-  freezed_annotation: ^2.4.4
-  json_annotation: ^4.9.0
 
   # UI / UX
   google_fonts: ^6.2.1
   shimmer: ^3.0.0
   cached_network_image: ^3.4.1
-  flutter_svg: ^2.0.10
   flutter_animate: ^4.5.0
   gal: ^2.3.0
 
   # Utilities
   share_plus: ^10.0.0
-  connectivity_plus: ^6.0.3
   uuid: ^4.4.0
-  envied: ^0.5.4
   logger: ^2.3.0
   url_launcher: ^6.3.0
   intl: ^0.19.0
@@ -60,17 +56,9 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
-  # Codegen
+  # Codegen (Hive type adapters)
   build_runner: ^2.4.11
-  freezed: ^2.5.2
-  json_serializable: ^6.8.0
   hive_generator: ^2.0.1
-  envied_generator: ^0.5.4
-
-  # Testing
-  mocktail: ^1.0.4
-  integration_test:
-    sdk: flutter
 
   # App launcher icon generation
   flutter_launcher_icons: ^0.14.1
@@ -87,7 +75,3 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
-
-  assets:
-    - assets/icons/
-    - assets/images/

@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/utils/ui_utils.dart';
-import '../../../shared/models/user_plan.dart';
 
-/// Shows the Pro upgrade paywall dialog.
+/// Shows the Pro "coming soon" dialog.
 Future<void> showProUpgradeDialog(BuildContext context) {
   return showDialog<void>(
     context: context,
@@ -12,7 +10,11 @@ Future<void> showProUpgradeDialog(BuildContext context) {
   );
 }
 
-/// Paywall popup shown when a free user hits their daily limit, or from Profile.
+/// Teaser shown when a free user hits their daily limit, or from Profile.
+///
+/// Billing is NOT live yet, so this intentionally shows NO price and NO
+/// purchase action — only a "Coming soon" teaser. (Play Store policy: never
+/// advertise a price or a buy button that cannot actually complete a purchase.)
 class ProUpgradeDialog extends StatelessWidget {
   const ProUpgradeDialog({super.key});
 
@@ -48,11 +50,12 @@ class ProUpgradeDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSizes.md),
-            Text('Upgrade to Pro',
+            Text('Pro is coming soon',
                 style: theme.textTheme.titleLarge, textAlign: TextAlign.center),
             const SizedBox(height: AppSizes.xs),
             Text(
-              'You\'ve used your free generation for today.',
+              "You've used your free generation for today. "
+              'Pro will unlock a lot more — stay tuned.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -70,32 +73,32 @@ class ProUpgradeDialog extends StatelessWidget {
                     ],
                   ),
                 )),
-            const SizedBox(height: AppSizes.md),
-            Text(
-              '₹$kProPriceRupees / month',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.primary,
+            const SizedBox(height: AppSizes.sm),
+            // Neutral "coming soon" chip — NO price until billing is live.
+            Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: AppSizes.md, vertical: AppSizes.xs),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                ),
+                child: Text(
+                  'Coming soon',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    color: theme.colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSizes.lg),
             FilledButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                UiUtils.showSuccessSnackBar(
-                  context,
-                  'Payments coming soon via Play Store.',
-                );
-              },
+              onPressed: () => Navigator.of(context).pop(),
               style: FilledButton.styleFrom(
                 minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
               ),
-              child: const Text('Upgrade Now'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Maybe later'),
+              child: const Text('Got it'),
             ),
           ],
         ),

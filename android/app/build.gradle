@@ -9,13 +9,16 @@ plugins {
 // Release signing: load android/key.properties if present (kept out of git).
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file("key.properties")
-if (keystorePropertiesFile.exists()) {
+def hasKeystore = keystorePropertiesFile.exists()
+if (hasKeystore) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
 android {
     namespace = "com.shortseo.short_seo_ai"
-    compileSdk = flutter.compileSdkVersion
+    // Pinned explicitly so the build target is deterministic and not silently
+    // changed by a Flutter SDK upgrade. Play requires targetSdk 35 for 2025+.
+    compileSdk = 35
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -30,14 +33,16 @@ android {
     defaultConfig {
         applicationId = "com.shortseo.short_seo_ai"
         minSdk = 23
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
     }
 
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
+            // Only populated when the upload keystore is present. If absent, a
+            // release build is FAILED below rather than silently debug-signed.
+            if (hasKeystore) {
                 keyAlias keystoreProperties["keyAlias"]
                 keyPassword keystoreProperties["keyPassword"]
                 storeFile keystoreProperties["storeFile"] ? file(keystoreProperties["storeFile"]) : null
@@ -48,13 +53,31 @@ android {
 
     buildTypes {
         release {
-            // Uses the real upload key when android/key.properties exists,
-            // otherwise falls back to debug signing for local dev builds.
-            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            // ALWAYS the real release signing config. Never fall back to debug.
+            signingConfig signingConfigs.release
             minifyEnabled = true
             shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+}
+
+// Fail the build (loudly) if a release artifact is requested without the upload
+// keystore. This prevents an unsigned/debug-signed AAB from ever being produced
+// — which Google Play would reject and which is a supply-chain risk.
+gradle.taskGraph.whenReady { graph ->
+    def buildingRelease = graph.allTasks.any { task ->
+        def n = task.name.toLowerCase()
+        (n.startsWith("assemble") || n.startsWith("bundle") || n.startsWith("package")) &&
+            n.contains("release")
+    }
+    if (buildingRelease && !hasKeystore) {
+        throw new GradleException(
+            "Release build requested but android/key.properties is missing.\n" +
+            "Refusing to sign the release with the debug key.\n" +
+            "Create android/key.properties from android/key.properties.example " +
+            "and point storeFile at your upload keystore."
+        )
     }
 }
 
