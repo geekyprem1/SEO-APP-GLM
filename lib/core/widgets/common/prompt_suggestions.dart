@@ -55,7 +55,7 @@ class _SuggestionChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: AppColors.primarySoft,
+      color: theme.colorScheme.primary.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(AppSizes.radiusFull),
       child: InkWell(
         onTap: onTap,

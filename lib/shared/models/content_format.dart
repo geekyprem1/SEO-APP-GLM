@@ -6,16 +6,33 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 /// by each feature's prompt builder (Phase 2) to adapt wording, lengths, and
 /// thumbnail aspect ratio.
 enum ContentFormat {
-  shorts('Shorts', 'YouTube Shorts (vertical, short-form)'),
-  longForm('Video', 'YouTube long-form video');
+  // Thumbnail resolutions follow YouTube's spec per format:
+  //  - Shorts:    1080×1920 (9:16, full-screen vertical mobile)
+  //  - Long-form: 1280×720  (16:9, YouTube's recommended size / 1280px min width)
+  shorts('Shorts', 'YouTube Shorts (vertical, short-form)', 1080, 1920),
+  longForm('Video', 'YouTube long-form video', 1280, 720);
 
-  const ContentFormat(this.label, this.description);
+  const ContentFormat(
+    this.label,
+    this.description,
+    this.thumbnailWidth,
+    this.thumbnailHeight,
+  );
 
   final String label;
   final String description;
 
+  /// Target thumbnail width in pixels for this format (YouTube spec).
+  final int thumbnailWidth;
+
+  /// Target thumbnail height in pixels for this format (YouTube spec).
+  final int thumbnailHeight;
+
   bool get isShorts => this == ContentFormat.shorts;
   bool get isLongForm => this == ContentFormat.longForm;
+
+  /// Aspect ratio (width / height) — used for distortion-free preview layout.
+  double get thumbnailAspectRatio => thumbnailWidth / thumbnailHeight;
 }
 
 /// Holds the format the user is currently working in.

@@ -6,6 +6,7 @@ import 'core/services/analytics_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/consent_gate.dart';
 import 'features/auth/providers/auth_provider.dart';
+import 'features/settings/providers/settings_provider.dart';
 
 /// Root widget for ShortSEO AI.
 class ShortSeoApp extends ConsumerWidget {
@@ -14,6 +15,7 @@ class ShortSeoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     // Sync analytics user id when auth changes.
     ref.listen<AuthState>(authStateProvider, (previous, next) {
@@ -26,9 +28,10 @@ class ShortSeoApp extends ConsumerWidget {
       title: 'Tubora',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      // Premium light-first brand: lock to light until a designed dark theme
-      // is added. (Avoids the system dark mode breaking the white surfaces.)
-      themeMode: ThemeMode.light,
+      darkTheme: AppTheme.dark,
+      // Follows the user's choice from Settings (System / Light / Dark),
+      // persisted in Hive via settingsProvider.
+      themeMode: themeMode,
       routerConfig: router,
       // Overlay the one-time analytics/crash consent prompt on first launch.
       builder: (context, child) =>

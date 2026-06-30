@@ -16,12 +16,13 @@ class ThumbnailPromptBuilder {
     required ThumbnailStyle style,
     ContentFormat format = ContentFormat.shorts,
   }) {
-    // Shorts thumbnails are vertical 9:16; long-form video thumbnails are
-    // horizontal 16:9.
+    // Shorts thumbnails are vertical 9:16 (1080×1920); long-form video
+    // thumbnails are horizontal 16:9 (1280×720). Exact pixel sizes come from
+    // ContentFormat so the app, request, and preview all stay in sync.
     final isShorts = format.isShorts;
     final orientation = isShorts ? 'vertical' : 'horizontal';
-    final width = isShorts ? 720 : 1280;
-    final height = isShorts ? 1280 : 720;
+    final width = format.thumbnailWidth;
+    final height = format.thumbnailHeight;
 
     // Note: do NOT mention "YouTube"/"Shorts"/"thumbnail" in the prompt —
     // FLUX renders such words as literal text in the image. Aspect ratio is

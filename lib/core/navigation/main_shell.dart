@@ -41,9 +41,11 @@ class _MainShellState extends State<MainShell> {
     return Scaffold(
       body: IndexedStack(index: _index, children: _tabs),
       bottomNavigationBar: DecoratedBox(
-        decoration: const BoxDecoration(
-          color: AppColors.surface,
-          border: Border(top: BorderSide(color: AppColors.divider)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          border: Border(
+            top: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          ),
         ),
         child: SafeArea(
           top: false,
@@ -87,7 +89,9 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primary : AppColors.textSecondary;
+    final color = selected
+        ? AppColors.primary
+        : Theme.of(context).colorScheme.onSurfaceVariant;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),

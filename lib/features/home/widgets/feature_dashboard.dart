@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../shared/models/content_format.dart';
 import '../models/feature_catalog.dart';
@@ -68,7 +67,7 @@ class _FeatureDashboardState extends ConsumerState<FeatureDashboard> {
                 fontSize: 34,
                 fontWeight: FontWeight.w700,
                 letterSpacing: -0.5,
-                color: AppColors.textPrimary,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.1,
               ),
             ).animate().fadeIn(duration: 300.ms).slideY(begin: 0.1, end: 0),
@@ -78,7 +77,7 @@ class _FeatureDashboardState extends ConsumerState<FeatureDashboard> {
               style: GoogleFonts.inter(
                 fontSize: 15,
                 height: 1.45,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ).animate().fadeIn(delay: 80.ms, duration: 300.ms),
             const SizedBox(height: AppSizes.lg),
@@ -95,7 +94,7 @@ class _FeatureDashboardState extends ConsumerState<FeatureDashboard> {
                           fontSize: 22,
                           fontWeight: FontWeight.w600,
                           letterSpacing: -0.3,
-                          color: AppColors.textPrimary,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),

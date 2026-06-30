@@ -16,6 +16,19 @@ const DEFAULT_WIDTH = 768;
 const DEFAULT_HEIGHT = 768;
 
 /**
+ * FLUX.1 Schnell on Replicate does NOT accept raw width/height — it only takes
+ * an `aspect_ratio` from a fixed set. Map the requested pixels to the closest
+ * supported ratio so thumbnails come out 16:9 / 9:16 instead of square.
+ */
+function toAspectRatio(width, height) {
+  const r = width / height;
+  if (Math.abs(r - 16 / 9) < 0.06) return '16:9';
+  if (Math.abs(r - 9 / 16) < 0.06) return '9:16';
+  if (r >= 1) return '16:9';
+  return '9:16';
+}
+
+/**
  * Generates an image via Replicate.
  * @param {object} params - { prompt, width, height }
  * @returns {Promise<{imageUrl: string, width: number, height: number, model: string}>}
@@ -37,10 +50,11 @@ async function generateImage({ prompt, width, height }) {
   const output = await replicate.run(model, {
     input: {
       prompt,
-      width: w,
-      height: h,
+      aspect_ratio: toAspectRatio(w, h),
       num_outputs: 1,
       output_format: 'png',
+      // Largest quality tier so 16:9 output stays ≥1280px wide (YouTube min).
+      megapixels: '1',
       go_fast: true,
     },
   });

@@ -214,7 +214,7 @@ class _ThumbnailGeneratorScreenState
   Widget _buildImageResult(GeneratedThumbnail thumbnail) {
     final theme = Theme.of(context);
     // Shorts → vertical 9:16; long-form video → horizontal 16:9.
-    final isShorts = ref.read(selectedFormatProvider).isShorts;
+    final format = ref.read(selectedFormatProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -224,7 +224,7 @@ class _ThumbnailGeneratorScreenState
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               child: AspectRatio(
-                aspectRatio: isShorts ? 9 / 16 : 16 / 9,
+                aspectRatio: format.thumbnailAspectRatio,
                 child: CachedNetworkImage(
                   imageUrl: thumbnail.imageUrl,
                   fit: BoxFit.cover,

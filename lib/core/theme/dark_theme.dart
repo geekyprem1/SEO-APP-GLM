@@ -23,7 +23,7 @@ ThemeData buildDarkTheme() {
       elevation: 0,
       scrolledUnderElevation: 0.5,
       backgroundColor: AppColors.darkBackground,
-      foregroundColor: AppColors.darkSurface,
+      foregroundColor: colorScheme.onSurface,
       surfaceTintColor: Colors.transparent,
       titleTextStyle: GoogleFonts.inter(
         fontSize: 20,

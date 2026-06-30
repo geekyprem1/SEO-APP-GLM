@@ -23,7 +23,9 @@ const LIMITS = {
   TEMP_MIN: 0,
   TEMP_MAX: 2,
   IMAGE_MIN: 256,
-  IMAGE_MAX: 1024,
+  // Must cover YouTube thumbnail sizes (long-form 1280×720, Shorts 1080×1920).
+  // A lower cap would clamp a dimension and distort the aspect ratio.
+  IMAGE_MAX: 1920,
   MAX_QUERY_LENGTH: 200,
   MAX_ID_LENGTH: 200,
   RESULTS_MIN: 1,
