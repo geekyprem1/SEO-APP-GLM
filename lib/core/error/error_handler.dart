@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart' as firebase_core;
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:flutter/services.dart';
 
 import 'exceptions.dart';
 import 'failures.dart';
@@ -59,6 +60,11 @@ class ErrorHandler {
       return _mapDioError(error);
     }
 
+    // Google Sign-In plugin errors.
+    if (error is PlatformException) {
+      return _mapPlatformError(error);
+    }
+
     // Firebase auth errors.
     if (error is firebase_auth.FirebaseAuthException) {
       return FirebaseFailure(
@@ -69,11 +75,22 @@ class ErrorHandler {
 
     // Firebase core errors.
     if (error is firebase_core.FirebaseException) {
-      return FirebaseFailure(message: error.message ?? 'Firebase error', code: error.code);
+      return FirebaseFailure(
+        message: _firebaseErrorMessage(error),
+        code: error.code,
+      );
     }
 
     // Fallback.
-    return UnknownFailure(message: error.toString());
+    final message = error.toString();
+    if (_isBlockedAndroidClient(message)) {
+      return const FirebaseFailure(
+        message:
+            'Sign-in is blocked for this app build. Please try again after the app is updated.',
+        code: 'android-client-blocked',
+      );
+    }
+    return UnknownFailure(message: message);
   }
 
   Failure _mapDioError(DioException error) {
@@ -112,7 +129,41 @@ class ErrorHandler {
     }
   }
 
+  Failure _mapPlatformError(PlatformException error) {
+    final message = [
+      error.message,
+      error.details?.toString(),
+      error.toString(),
+    ].whereType<String>().join(' ');
+
+    if (_isBlockedAndroidClient(message)) {
+      return const FirebaseFailure(
+        message:
+            'Sign-in is blocked for this app build. Please try again after the app is updated.',
+        code: 'android-client-blocked',
+      );
+    }
+
+    switch (error.code) {
+      case 'sign_in_canceled':
+        return const CancelledFailure(message: 'Sign-in cancelled.');
+      case 'network_error':
+        return const NetworkFailure();
+      case 'sign_in_failed':
+        return const FirebaseFailure(
+          message: 'Google sign-in failed. Please try email or guest sign-in.',
+          code: 'google-sign-in-failed',
+        );
+      default:
+        return UnknownFailure(message: error.message ?? 'Something went wrong.');
+    }
+  }
+
   String _authErrorMessage(firebase_auth.FirebaseAuthException error) {
+    if (_isBlockedAndroidClient(error.message ?? error.toString())) {
+      return 'Sign-in is blocked for this app build. Please try again after the app is updated.';
+    }
+
     switch (error.code) {
       case 'user-not-found':
         return 'No user found. Please sign in again.';
@@ -129,5 +180,20 @@ class ErrorHandler {
       default:
         return error.message ?? 'Authentication error.';
     }
+  }
+
+  String _firebaseErrorMessage(firebase_core.FirebaseException error) {
+    final message = error.message ?? error.toString();
+    if (_isBlockedAndroidClient(message)) {
+      return 'Sign-in is blocked for this app build. Please try again after the app is updated.';
+    }
+    return error.message ?? 'Firebase error';
+  }
+
+  bool _isBlockedAndroidClient(String message) {
+    final normalized = message.toLowerCase();
+    return normalized.contains('requests from this android client application') ||
+        normalized.contains('android client application') &&
+            normalized.contains('blocked');
   }
 }

@@ -12,6 +12,9 @@ import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/generated_text_result.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
 import '../../content/models/generated_content.dart';
+import '../../content_studio/models/content_package.dart';
+import '../../content_studio/repository/content_studio_repository.dart';
+import '../../content_studio/widgets/content_package_editor.dart';
 import '../../description/models/generated_description.dart';
 import '../../hashtags/models/generated_hashtag.dart';
 import '../../seo/models/seo_analysis.dart';
@@ -129,7 +132,7 @@ class HistoryDetailScreen extends ConsumerWidget {
           ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: AppSizes.lg),
           // Rehydrated content
-          _buildRehydratedContent(context, theme, item),
+          _buildRehydratedContent(context, theme, item, ref),
         ],
       ),
     );
@@ -141,6 +144,7 @@ class HistoryDetailScreen extends ConsumerWidget {
     BuildContext context,
     ThemeData theme,
     HistoryItem item,
+    WidgetRef ref,
   ) {
     switch (item.type) {
       case HistoryType.title:
@@ -177,6 +181,26 @@ class HistoryDetailScreen extends ConsumerWidget {
       case HistoryType.seo:
         final analysis = SeoAnalysis.fromJson(item.data);
         return _buildSeoContent(context, theme, analysis);
+
+      case HistoryType.contentStudio:
+        final package = ContentPackage.fromJson(item.data);
+        return ContentPackageEditor(
+          key: ValueKey(package.id),
+          package: package,
+          saveLabel: 'Update',
+          onSave: (edited) async {
+            try {
+              await ref
+                  .read(contentStudioRepositoryProvider)
+                  .saveToHistory(edited);
+              ref.invalidate(historyProvider);
+              ref.invalidate(historyItemByIdProvider(edited.id));
+              return true;
+            } catch (_) {
+              return false;
+            }
+          },
+        );
     }
   }
 

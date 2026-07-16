@@ -29,6 +29,8 @@ class HistoryTypeMeta {
           Icons.image_rounded, AppColors.thumbnailAccent, 'Thumbnail'),
       HistoryType.seo => const HistoryTypeMeta._(
           Icons.analytics_rounded, AppColors.seoAccent, 'SEO Analysis'),
+      HistoryType.contentStudio => const HistoryTypeMeta._(
+          Icons.auto_awesome_motion_rounded, AppColors.primary, 'Content Studio'),
     };
   }
 }

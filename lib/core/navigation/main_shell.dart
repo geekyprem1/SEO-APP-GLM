@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
-import '../../features/create/screens/create_placeholder_screen.dart';
+import '../../features/content_studio/screens/content_studio_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/home/screens/video_home_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 
 /// Root shell with the bottom navigation bar.
 ///
-/// Tabs: Video (long-form) · Short · Create (placeholder) · Profile.
+/// Tabs: Video (long-form) · Short · Create (AI Content Studio) · Profile.
 /// Uses an [IndexedStack] so each tab keeps its scroll/state when switching.
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -25,7 +25,7 @@ class _MainShellState extends State<MainShell> {
   static const _tabs = [
     VideoHomeScreen(),
     HomeScreen(),
-    CreatePlaceholderScreen(),
+    ContentStudioScreen(),
     ProfileScreen(),
   ];
 

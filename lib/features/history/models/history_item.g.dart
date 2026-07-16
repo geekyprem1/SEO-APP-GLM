@@ -75,6 +75,8 @@ class HistoryTypeAdapter extends TypeAdapter<HistoryType> {
         return HistoryType.thumbnail;
       case 7:
         return HistoryType.seo;
+      case 8:
+        return HistoryType.contentStudio;
       default:
         return HistoryType.title;
     }
@@ -106,6 +108,9 @@ class HistoryTypeAdapter extends TypeAdapter<HistoryType> {
         break;
       case HistoryType.seo:
         writer.writeByte(7);
+        break;
+      case HistoryType.contentStudio:
+        writer.writeByte(8);
         break;
     }
   }

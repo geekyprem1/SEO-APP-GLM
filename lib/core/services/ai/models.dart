@@ -10,7 +10,8 @@ enum AiFeature {
   viralIdeas('viralIdeas', 20),
   trending('trending', 20),
   seo('seo', 10),
-  thumbnail('thumbnail', 3);
+  thumbnail('thumbnail', 3),
+  contentStudio('contentStudio', 10);
 
   const AiFeature(this.id, this.dailyLimit);
 

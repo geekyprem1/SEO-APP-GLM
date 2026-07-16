@@ -21,6 +21,8 @@ enum HistoryType {
   thumbnail,
   @HiveField(7)
   seo,
+  @HiveField(8)
+  contentStudio,
 }
 
 /// Polymorphic history entry stored in Hive.

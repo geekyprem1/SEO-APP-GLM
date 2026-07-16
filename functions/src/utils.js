@@ -36,6 +36,7 @@ const LIMITS = {
 const VALID_FEATURES = new Set([
   'title', 'hashtag', 'description', 'content',
   'viralIdeas', 'trending', 'seo', 'thumbnail',
+  'contentStudio',
 ]);
 
 const VALID_SEO_ACTIONS = new Set(['fetchVideo', 'fetchChannel', 'search']);

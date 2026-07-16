@@ -63,9 +63,7 @@ const youtubeKey = defineSecret('YOUTUBE_API_KEY');
 exports.generateContent = onCall(
   {
     secrets: [openrouterKey],
-    // enforceAppCheck: true, // ⚠️ RE-ENABLE before Play production (after the
-    // Play app-signing SHA-256 is added to Firebase App Check). Kept OFF during
-    // dev so sideloaded test builds (ENABLE_APP_CHECK=false) can call functions.
+    enforceAppCheck: true,
     timeoutSeconds: 30,
     memory: '256MiB',
   },
@@ -156,9 +154,7 @@ exports.generateContent = onCall(
 exports.generateImage = onCall(
   {
     secrets: [siliconflowKey, replicateKey],
-    // enforceAppCheck: true, // ⚠️ RE-ENABLE before Play production (after the
-    // Play app-signing SHA-256 is added to Firebase App Check). Kept OFF during
-    // dev so sideloaded test builds (ENABLE_APP_CHECK=false) can call functions.
+    enforceAppCheck: true,
     timeoutSeconds: 60,
     memory: '512MiB',
   },
@@ -265,9 +261,7 @@ exports.generateImage = onCall(
 exports.analyzeSeo = onCall(
   {
     secrets: [youtubeKey, openrouterKey],
-    // enforceAppCheck: true, // ⚠️ RE-ENABLE before Play production (after the
-    // Play app-signing SHA-256 is added to Firebase App Check). Kept OFF during
-    // dev so sideloaded test builds (ENABLE_APP_CHECK=false) can call functions.
+    enforceAppCheck: true,
     timeoutSeconds: 30,
     memory: '256MiB',
   },

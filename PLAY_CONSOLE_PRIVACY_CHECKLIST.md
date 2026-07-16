@@ -67,6 +67,12 @@ controller, so declaring it as shared is the safe choice.
 - [ ] **Account creation**: app supports account sign-in → provide test credentials / deletion instructions
 - [x] **Data deletion**: in-app + email path documented in policy
 
+### App access reviewer credentials
+- [ ] Create the reviewer email/password in Firebase Authentication before submitting.
+- [ ] Test the same credentials on a Play-installed build, not only on a local/sideloaded APK.
+- [ ] Confirm Google Sign-In and guest access also work after adding the Play app-signing SHA-1/SHA-256 to Firebase and any Google Cloud API key restrictions.
+- [ ] In Play Console -> App content -> App access, include the exact credentials plus: "Guest access is available from the login screen via Skip - continue as Guest."
+
 ## 6. Pre-submission manual verification
 - [ ] Load `https://tubora.online/privacy.html` (incognito) → 200 OK, content visible
 - [ ] Confirm `https://www.tubora.online/privacy.html` is NOT what's submitted anywhere
