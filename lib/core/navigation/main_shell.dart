@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
+import '../services/ai/cloud_functions_ai_service.dart';
 import '../../features/content_studio/screens/content_studio_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/home/screens/video_home_screen.dart';
@@ -11,14 +13,14 @@ import '../../features/profile/screens/profile_screen.dart';
 ///
 /// Tabs: Video (long-form) · Short · Create (AI Content Studio) · Profile.
 /// Uses an [IndexedStack] so each tab keeps its scroll/state when switching.
-class MainShell extends StatefulWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> {
   // Default to the Short tab (the original dashboard).
   int _index = 1;
 
@@ -35,6 +37,16 @@ class _MainShellState extends State<MainShell> {
     (Icons.add_circle_outline_rounded, Icons.add_circle_rounded, 'Create'),
     (Icons.person_outline_rounded, Icons.person_rounded, 'Profile'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Wake generateContent in the background so the next Generate is often warm.
+    // Non-blocking — never delays first paint.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(aiServiceProvider).warmup();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

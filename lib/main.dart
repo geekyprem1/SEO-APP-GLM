@@ -159,6 +159,9 @@ class _NoOpAiService implements AiService {
   Future<AiResult> generate({required AiRequest request}) async {
     throw UnimplementedError('AI service unavailable — Firebase not configured.');
   }
+
+  @override
+  Future<void> warmup() async {}
 }
 
 class _NoOpImageService implements ImageGenerationService {

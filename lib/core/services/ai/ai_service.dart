@@ -18,4 +18,8 @@ abstract class AiService {
   /// - rate limit
   /// - API errors
   Future<AiResult> generate({required AiRequest request});
+
+  /// Best-effort ping to wake the Cloud Function instance (no AI / quota).
+  /// Failures are swallowed by the implementation — never block the UI.
+  Future<void> warmup();
 }

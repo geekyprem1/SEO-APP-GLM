@@ -73,20 +73,18 @@ exports.generateContent = onCall(
     // 1. Auth
     const uid = await verifyAuth(request);
 
+    // Warmup: wake this function instance without AI / quota / rate-limit cost.
+    // Client fires this after login so the next real generate is usually warm.
+    if (request.data?.warmup === true) {
+      logger.info('Warmup ping', { uid });
+      return { ok: true, warmup: true };
+    }
+
     // 2. Validate + sanitize input (rejects malformed input, clamps numbers).
     const { feature, prompt, schema, maxTokens, temperature } =
       validateGenerateContent(request.data);
 
-    // 3. Rate limit
-    await checkRateLimit(uid);
-
-    // 4. Quota
-    await checkQuota(uid, feature);
-
-    // 5. Budget
-    await checkBudget();
-
-    // 6. Server-generated cache key (client cacheKey is never trusted).
+    // 3–6. Prechecks in parallel (independent Firestore reads/writes).
     const cacheKey = buildCacheKey(uid, {
       kind: 'text',
       feature,
@@ -96,14 +94,19 @@ exports.generateContent = onCall(
       temperature,
     });
 
-    // 7. Cache check
-    const cached = await getCache(cacheKey);
+    const [, , , cached] = await Promise.all([
+      checkRateLimit(uid),
+      checkQuota(uid, feature),
+      checkBudget(),
+      getCache(cacheKey),
+    ]);
+
     if (cached) {
       logger.info('Cache hit', { uid, feature });
       return cached;
     }
 
-    // 8. Call OpenRouter
+    // 7. Call OpenRouter
     try {
       const result = await generateText({ prompt, schema, maxTokens, temperature });
       const cost = ESTIMATED_COSTS.text;
@@ -115,24 +118,20 @@ exports.generateContent = onCall(
         estimatedCost: cost,
       };
 
-      // 9. Cache store
-      await setCache(cacheKey, response);
-
-      // 10. Increment usage
-      await incrementUsage(uid, feature);
-
-      // 11. Add cost
-      await addCost(cost);
-
-      // 12. Log
-      await logRequest({
-        uid,
-        feature,
-        model: TEXT_MODEL,
-        tokens: result.tokensUsed,
-        cost,
-        durationMs: Date.now() - startTime,
-      });
+      // 8. Persist side-effects in parallel (must await — CF may freeze after return).
+      await Promise.all([
+        setCache(cacheKey, response),
+        incrementUsage(uid, feature),
+        addCost(cost),
+        logRequest({
+          uid,
+          feature,
+          model: TEXT_MODEL,
+          tokens: result.tokensUsed,
+          cost,
+          durationMs: Date.now() - startTime,
+        }),
+      ]);
 
       return response;
     } catch (error) {
@@ -164,20 +163,16 @@ exports.generateImage = onCall(
     // 1. Auth
     const uid = await verifyAuth(request);
 
+    if (request.data?.warmup === true) {
+      logger.info('Image warmup ping', { uid });
+      return { ok: true, warmup: true };
+    }
+
     // 2. Validate + sanitize input (rejects malformed input, clamps dimensions).
     const { feature, prompt, width, height } =
       validateGenerateImage(request.data);
 
-    // 3. Rate limit
-    await checkRateLimit(uid);
-
-    // 4. Quota (thumbnail: 3/day)
-    await checkQuota(uid, feature);
-
-    // 5. Budget
-    await checkBudget();
-
-    // 6. Server-generated cache key (client cacheKey is never trusted).
+    // 3–6. Prechecks in parallel.
     const cacheKey = buildCacheKey(uid, {
       kind: 'image',
       feature,
@@ -186,14 +181,19 @@ exports.generateImage = onCall(
       height,
     });
 
-    // 7. Cache check
-    const cached = await getCache(cacheKey);
+    const [, , , cached] = await Promise.all([
+      checkRateLimit(uid),
+      checkQuota(uid, feature),
+      checkBudget(),
+      getCache(cacheKey),
+    ]);
+
     if (cached) {
       logger.info('Cache hit (image)', { uid, feature });
       return cached;
     }
 
-    // 8. Call SiliconFlow (primary) → Replicate (fallback)
+    // 7. Call SiliconFlow (primary) → Replicate (fallback)
     let result;
     let usedModel;
     try {
@@ -234,24 +234,19 @@ exports.generateImage = onCall(
       estimatedCost: cost,
     };
 
-    // 9. Cache store
-    await setCache(cacheKey, response);
-
-    // 10. Increment usage
-    await incrementUsage(uid, feature);
-
-    // 11. Add cost
-    await addCost(cost);
-
-    // 12. Log
-    await logRequest({
-      uid,
-      feature,
-      model: usedModel,
-      tokens: 0,
-      cost,
-      durationMs: Date.now() - startTime,
-    });
+    await Promise.all([
+      setCache(cacheKey, response),
+      incrementUsage(uid, feature),
+      addCost(cost),
+      logRequest({
+        uid,
+        feature,
+        model: usedModel,
+        tokens: 0,
+        cost,
+        durationMs: Date.now() - startTime,
+      }),
+    ]);
 
     return response;
   }

@@ -71,6 +71,17 @@ class CloudFunctionsAiService implements AiService {
       throw _errorHandler.convert(e, st);
     }
   }
+
+  @override
+  Future<void> warmup() async {
+    try {
+      final callable =
+          _functions.httpsCallable(AppConstants.generateContentFunction);
+      await callable.call<dynamic>({'warmup': true});
+    } catch (_) {
+      // Best-effort only — cold start still happens if this fails.
+    }
+  }
 }
 
 /// Provider for [AiService].

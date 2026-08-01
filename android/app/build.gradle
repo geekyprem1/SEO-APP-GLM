@@ -18,7 +18,7 @@ android {
     namespace = "com.shortseo.short_seo_ai"
     // Pinned explicitly so the build target is deterministic and not silently
     // changed by a Flutter SDK upgrade. Play requires targetSdk 35 for 2025+.
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -32,7 +32,7 @@ android {
 
     defaultConfig {
         applicationId = "com.shortseo.short_seo_ai"
-        minSdk = 23
+        minSdkVersion = flutter.minSdkVersion
         targetSdk = 35
         versionCode = 2
         versionName = "1.0.1"
