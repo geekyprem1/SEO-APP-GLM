@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 
 /// Shimmer skeleton placeholder for loading states.
@@ -18,8 +19,8 @@ class ShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const baseColor = Color(0xFFEFEFEF);
-    const highlightColor = Color(0xFFF8F8F8);
+    const baseColor = AppColors.primarySoft;
+    const highlightColor = AppColors.heroWash;
 
     return Shimmer.fromColors(
       baseColor: baseColor,

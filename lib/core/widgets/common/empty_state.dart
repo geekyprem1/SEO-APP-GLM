@@ -30,19 +30,22 @@ class EmptyState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.12),
+                color: AppColors.primarySoft,
                 borderRadius: BorderRadius.circular(AppSizes.radiusXl),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.12),
+                ),
               ),
-              child: Icon(icon, size: 32, color: AppColors.primaryDark),
+              child: Icon(icon, size: 34, color: AppColors.primary),
             ),
             const SizedBox(height: AppSizes.lg),
             Text(
               title,
               style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
               textAlign: TextAlign.center,
             ),
@@ -52,6 +55,7 @@ class EmptyState extends StatelessWidget {
                 subtitle!,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),

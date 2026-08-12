@@ -25,7 +25,11 @@ ThemeData buildLightTheme() {
     brightness: Brightness.light,
     colorScheme: colorScheme,
     scaffoldBackgroundColor: AppColors.background,
-    textTheme: GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+    textTheme: _professionalTextTheme(
+      GoogleFonts.interTextTheme(ThemeData.light().textTheme),
+      AppColors.textPrimary,
+      AppColors.textSecondary,
+    ),
     // Smooth fade page transitions across the whole app.
     pageTransitionsTheme: const PageTransitionsTheme(builders: {
       TargetPlatform.android: _FadePageTransitionsBuilder(),
@@ -40,7 +44,8 @@ ThemeData buildLightTheme() {
       surfaceTintColor: Colors.transparent,
       titleTextStyle: GoogleFonts.inter(
         fontSize: 20,
-        fontWeight: FontWeight.w600,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
         color: AppColors.textPrimary,
       ),
     ),
@@ -59,8 +64,9 @@ ThemeData buildLightTheme() {
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
         textStyle: GoogleFonts.inter(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.1,
         ),
       ),
     ),
@@ -71,8 +77,9 @@ ThemeData buildLightTheme() {
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         ),
         textStyle: GoogleFonts.inter(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.1,
         ),
       ),
     ),
@@ -103,9 +110,14 @@ ThemeData buildLightTheme() {
         borderRadius: BorderRadius.circular(AppSizes.radiusLg),
         borderSide: BorderSide(color: colorScheme.error, width: 2),
       ),
-      labelStyle: GoogleFonts.inter(fontSize: 14),
+      labelStyle: GoogleFonts.inter(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
+      ),
       hintStyle: GoogleFonts.inter(
         fontSize: 14,
+        height: 1.35,
         color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
       ),
     ),
@@ -131,6 +143,104 @@ ThemeData buildLightTheme() {
       color: AppColors.divider,
       thickness: 1,
       space: 1,
+    ),
+  );
+}
+
+/// A deliberate display/body/label hierarchy instead of Material defaults.
+TextTheme _professionalTextTheme(
+  TextTheme base,
+  Color primary,
+  Color secondary,
+) {
+  return base.copyWith(
+    displayLarge: base.displayLarge?.copyWith(
+      fontSize: 40,
+      fontWeight: FontWeight.w700,
+      height: 1.08,
+      letterSpacing: -1.2,
+      color: primary,
+    ),
+    displayMedium: base.displayMedium?.copyWith(
+      fontSize: 32,
+      fontWeight: FontWeight.w700,
+      height: 1.1,
+      letterSpacing: -0.9,
+      color: primary,
+    ),
+    displaySmall: base.displaySmall?.copyWith(
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      height: 1.15,
+      letterSpacing: -0.65,
+      color: primary,
+    ),
+    headlineLarge: base.headlineLarge?.copyWith(
+      fontSize: 24,
+      fontWeight: FontWeight.w700,
+      height: 1.2,
+      letterSpacing: -0.45,
+      color: primary,
+    ),
+    headlineMedium: base.headlineMedium?.copyWith(
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+      height: 1.25,
+      letterSpacing: -0.35,
+      color: primary,
+    ),
+    titleLarge: base.titleLarge?.copyWith(
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+      height: 1.3,
+      letterSpacing: -0.25,
+      color: primary,
+    ),
+    titleMedium: base.titleMedium?.copyWith(
+      fontSize: 16,
+      fontWeight: FontWeight.w700,
+      height: 1.3,
+      letterSpacing: -0.1,
+      color: primary,
+    ),
+    titleSmall: base.titleSmall?.copyWith(
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      height: 1.3,
+      color: primary,
+    ),
+    bodyLarge: base.bodyLarge?.copyWith(
+      fontSize: 16,
+      height: 1.5,
+      color: primary,
+    ),
+    bodyMedium: base.bodyMedium?.copyWith(
+      fontSize: 14,
+      height: 1.45,
+      color: primary,
+    ),
+    bodySmall: base.bodySmall?.copyWith(
+      fontSize: 12,
+      height: 1.35,
+      color: secondary,
+    ),
+    labelLarge: base.labelLarge?.copyWith(
+      fontSize: 14,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.1,
+      color: primary,
+    ),
+    labelMedium: base.labelMedium?.copyWith(
+      fontSize: 12,
+      fontWeight: FontWeight.w700,
+      letterSpacing: 0.2,
+      color: primary,
+    ),
+    labelSmall: base.labelSmall?.copyWith(
+      fontSize: 11,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0.25,
+      color: secondary,
     ),
   );
 }

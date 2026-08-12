@@ -77,6 +77,18 @@ class HistoryTypeAdapter extends TypeAdapter<HistoryType> {
         return HistoryType.seo;
       case 8:
         return HistoryType.contentStudio;
+      case 9:
+        return HistoryType.hook;
+      case 10:
+        return HistoryType.captions;
+      case 11:
+        return HistoryType.chapters;
+      case 12:
+        return HistoryType.cta;
+      case 13:
+        return HistoryType.competitor;
+      case 14:
+        return HistoryType.series;
       default:
         return HistoryType.title;
     }
@@ -111,6 +123,24 @@ class HistoryTypeAdapter extends TypeAdapter<HistoryType> {
         break;
       case HistoryType.contentStudio:
         writer.writeByte(8);
+        break;
+      case HistoryType.hook:
+        writer.writeByte(9);
+        break;
+      case HistoryType.captions:
+        writer.writeByte(10);
+        break;
+      case HistoryType.chapters:
+        writer.writeByte(11);
+        break;
+      case HistoryType.cta:
+        writer.writeByte(12);
+        break;
+      case HistoryType.competitor:
+        writer.writeByte(13);
+        break;
+      case HistoryType.series:
+        writer.writeByte(14);
         break;
     }
   }

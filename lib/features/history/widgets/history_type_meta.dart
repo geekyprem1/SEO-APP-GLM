@@ -31,6 +31,18 @@ class HistoryTypeMeta {
           Icons.analytics_rounded, AppColors.seoAccent, 'SEO Analysis'),
       HistoryType.contentStudio => const HistoryTypeMeta._(
           Icons.auto_awesome_motion_rounded, AppColors.primary, 'Content Studio'),
+      HistoryType.hook => const HistoryTypeMeta._(
+          Icons.campaign_rounded, AppColors.primary, 'Hooks'),
+      HistoryType.captions => const HistoryTypeMeta._(
+          Icons.closed_caption_rounded, AppColors.primary, 'Captions'),
+      HistoryType.chapters => const HistoryTypeMeta._(
+          Icons.view_timeline_rounded, AppColors.primary, 'Chapters'),
+      HistoryType.cta => const HistoryTypeMeta._(
+          Icons.ads_click_rounded, AppColors.primary, 'CTA'),
+      HistoryType.competitor => const HistoryTypeMeta._(
+          Icons.compare_arrows_rounded, AppColors.primary, 'Title Rewriter'),
+      HistoryType.series => const HistoryTypeMeta._(
+          Icons.dynamic_feed_rounded, AppColors.primary, 'Series Pack'),
     };
   }
 }

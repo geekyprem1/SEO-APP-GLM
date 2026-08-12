@@ -11,7 +11,7 @@ class FeatureCatalog {
   /// Section order on the dashboard.
   static const List<String> sectionOrder = ['Create', 'Grow', 'Content'];
 
-  /// The 8 AI generation features shown in the Video/Short dashboard grids.
+  /// AI generation features shown in the Video/Short dashboard grids.
   static List<FeatureItem> get generators =>
       all.where((f) => f.id != 'history' && f.id != 'settings').toList();
 
@@ -68,6 +68,26 @@ class FeatureCatalog {
       section: 'Create',
       gradient: [Color(0xFF34D399), Color(0xFF059669)],
     ),
+    FeatureItem(
+      id: 'hook',
+      title: 'Hook Generator',
+      subtitle: 'First 3-second openers',
+      icon: Icons.campaign_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.hook,
+      section: 'Create',
+      gradient: [Color(0xFFFF8A65), Color(0xFFE64A19)],
+    ),
+    FeatureItem(
+      id: 'cta',
+      title: 'CTA / End Screen',
+      subtitle: 'Subscribe & end lines',
+      icon: Icons.ads_click_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.cta,
+      section: 'Create',
+      gradient: [Color(0xFFFFB74D), Color(0xFFF57C00)],
+    ),
 
     // ── Grow ────────────────────────────────────────────────
     FeatureItem(
@@ -90,6 +110,26 @@ class FeatureCatalog {
       section: 'Grow',
       gradient: [Color(0xFF2DD4BF), Color(0xFF0D9488)],
     ),
+    FeatureItem(
+      id: 'chapters',
+      title: 'Chapter Timestamps',
+      subtitle: 'YouTube description chapters',
+      icon: Icons.view_timeline_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.chapters,
+      section: 'Grow',
+      gradient: [Color(0xFF64B5F6), Color(0xFF1E88E5)],
+    ),
+    FeatureItem(
+      id: 'competitor',
+      title: 'Title Rewriter',
+      subtitle: 'Beat competing titles',
+      icon: Icons.compare_arrows_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.competitor,
+      section: 'Grow',
+      gradient: [Color(0xFF4DB6AC), Color(0xFF00897B)],
+    ),
 
     // ── Content ─────────────────────────────────────────────
     FeatureItem(
@@ -111,6 +151,26 @@ class FeatureCatalog {
       route: AppRoutes.viralIdeas,
       section: 'Content',
       gradient: [Color(0xFFFF5A5F), Color(0xFFE53935)],
+    ),
+    FeatureItem(
+      id: 'captions',
+      title: 'On-screen Captions',
+      subtitle: 'Text overlays for Shorts',
+      icon: Icons.closed_caption_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.captions,
+      section: 'Content',
+      gradient: [Color(0xFFCE93D8), Color(0xFF8E24AA)],
+    ),
+    FeatureItem(
+      id: 'series',
+      title: 'Series Pack',
+      subtitle: '1 topic → episode ideas',
+      icon: Icons.dynamic_feed_rounded,
+      color: AppColors.primary,
+      route: AppRoutes.series,
+      section: 'Content',
+      gradient: [Color(0xFFBA68C8), Color(0xFF6A1B9A)],
     ),
 
     // ── Not shown in grid (accessed from Profile) ───────────

@@ -14,8 +14,16 @@ enum UserPlan {
   bool get isPro => this == UserPlan.pro;
   bool get isFree => this == UserPlan.free;
 
-  static UserPlan fromString(String? value) =>
-      value == 'pro' ? UserPlan.pro : UserPlan.free;
+  /// Admin may grant `lifetime`; treat it as Pro in the app UI.
+  static UserPlan fromString(String? value) {
+    switch (value) {
+      case 'pro':
+      case 'lifetime':
+        return UserPlan.pro;
+      default:
+        return UserPlan.free;
+    }
+  }
 }
 
 /// Streams the current user's plan from `users/{uid}.plan`.

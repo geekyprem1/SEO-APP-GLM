@@ -11,13 +11,19 @@ import '../../../core/widgets/common/app_card.dart';
 import '../../../core/widgets/common/error_state.dart';
 import '../../../core/widgets/common/generated_text_result.dart';
 import '../../../core/widgets/common/result_actions_bar.dart';
+import '../../captions/models/generated_captions.dart';
+import '../../chapters/models/generated_chapters.dart';
+import '../../competitor/models/generated_competitor_titles.dart';
 import '../../content/models/generated_content.dart';
 import '../../content_studio/models/content_package.dart';
 import '../../content_studio/repository/content_studio_repository.dart';
 import '../../content_studio/widgets/content_package_editor.dart';
+import '../../cta/models/generated_cta.dart';
 import '../../description/models/generated_description.dart';
 import '../../hashtags/models/generated_hashtag.dart';
+import '../../hook/models/generated_hook.dart';
 import '../../seo/models/seo_analysis.dart';
+import '../../series/models/generated_series.dart';
 import '../../title/models/generated_title.dart';
 import '../../trending/models/trending_topics.dart';
 import '../../viral_ideas/models/viral_ideas.dart';
@@ -200,6 +206,50 @@ class HistoryDetailScreen extends ConsumerWidget {
               return false;
             }
           },
+        );
+
+      case HistoryType.hook:
+        final hook = GeneratedHook.fromJson(item.data);
+        return _buildListContent(context, theme, hook.hooks, hook.shareText);
+
+      case HistoryType.captions:
+        final captions = GeneratedCaptions.fromJson(item.data);
+        return _buildListContent(
+          context,
+          theme,
+          captions.lines,
+          captions.shareText,
+        );
+
+      case HistoryType.chapters:
+        final chapters = GeneratedChapters.fromJson(item.data);
+        return _buildListContent(
+          context,
+          theme,
+          chapters.lines,
+          chapters.shareText,
+        );
+
+      case HistoryType.cta:
+        final cta = GeneratedCta.fromJson(item.data);
+        return _buildListContent(context, theme, cta.ctas, cta.shareText);
+
+      case HistoryType.competitor:
+        final competitor = GeneratedCompetitorTitles.fromJson(item.data);
+        return _buildListContent(
+          context,
+          theme,
+          competitor.titles,
+          competitor.shareText,
+        );
+
+      case HistoryType.series:
+        final series = GeneratedSeries.fromJson(item.data);
+        return _buildListContent(
+          context,
+          theme,
+          series.lines,
+          series.shareText,
         );
     }
   }

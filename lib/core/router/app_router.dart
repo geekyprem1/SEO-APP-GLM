@@ -16,6 +16,12 @@ import '../../features/viral_ideas/screens/viral_ideas_screen.dart';
 import '../../features/trending/screens/trending_screen.dart';
 import '../../features/thumbnail/screens/thumbnail_generator_screen.dart';
 import '../../features/seo/screens/seo_analysis_screen.dart';
+import '../../features/hook/screens/hook_generator_screen.dart';
+import '../../features/captions/screens/captions_generator_screen.dart';
+import '../../features/chapters/screens/chapters_generator_screen.dart';
+import '../../features/cta/screens/cta_generator_screen.dart';
+import '../../features/competitor/screens/competitor_rewriter_screen.dart';
+import '../../features/series/screens/series_generator_screen.dart';
 import '../../features/history/screens/history_screen.dart';
 import '../../features/history/screens/history_detail_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -122,6 +128,36 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.seo,
         name: 'seo',
         builder: (context, state) => const SeoAnalysisScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.hook,
+        name: 'hook',
+        builder: (context, state) => const HookGeneratorScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.captions,
+        name: 'captions',
+        builder: (context, state) => const CaptionsGeneratorScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.chapters,
+        name: 'chapters',
+        builder: (context, state) => const ChaptersGeneratorScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.cta,
+        name: 'cta',
+        builder: (context, state) => const CtaGeneratorScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.competitor,
+        name: 'competitor',
+        builder: (context, state) => const CompetitorRewriterScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.series,
+        name: 'series',
+        builder: (context, state) => const SeriesGeneratorScreen(),
       ),
       GoRoute(
         path: AppRoutes.history,

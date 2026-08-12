@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/utils/ui_utils.dart';
@@ -76,11 +77,11 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingMd),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                color: plan.isPro
-                    ? theme.colorScheme.primaryContainer
-                    : theme.colorScheme.surface,
+                color: plan.isPro ? AppColors.primarySoft : AppColors.surface,
                 border: Border.all(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  color: plan.isPro
+                      ? AppColors.primary.withValues(alpha: 0.3)
+                      : AppColors.border,
                 ),
               ),
               child: Column(
@@ -92,28 +93,64 @@ class ProfileScreen extends ConsumerWidget {
                         plan.isPro
                             ? Icons.workspace_premium_rounded
                             : Icons.person_outline_rounded,
-                        color: theme.colorScheme.primary,
+                        color: AppColors.primary,
                       ),
                       const SizedBox(width: AppSizes.sm),
-                      Text('${plan.label} plan',
-                          style: theme.textTheme.titleSmall),
+                      Expanded(
+                        child: Text(
+                          '${plan.label} plan',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: plan.isPro
+                              ? AppColors.primary
+                              : AppColors.primarySoft,
+                          borderRadius:
+                              BorderRadius.circular(AppSizes.radiusLg),
+                        ),
+                        child: Text(
+                          plan.isPro ? 'PRO' : 'FREE',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: plan.isPro
+                                ? Colors.white
+                                : AppColors.primaryDark,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ],
                   ),
-                  if (plan.isFree) ...[
-                    const SizedBox(height: AppSizes.sm),
-                    Text(
-                      'Free: 1 generation per feature daily. Upgrade for 50/day.',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                  const SizedBox(height: AppSizes.sm),
+                  Text(
+                    plan.isPro
+                        ? 'Higher daily limits across every AI feature.'
+                        : '1 generation per feature daily · resets each day.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      height: 1.35,
                     ),
+                  ),
+                  if (plan.isFree) ...[
                     const SizedBox(height: AppSizes.md),
                     FilledButton.icon(
-                      onPressed: () => showProUpgradeDialog(context),
+                      onPressed: () => showProUpgradeDialog(
+                        context,
+                        reason: ProUpgradeReason.explore,
+                      ),
                       icon: const Icon(Icons.workspace_premium_rounded),
                       label: const Text('Upgrade to Pro'),
                       style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
+                        backgroundColor: AppColors.primary,
+                        minimumSize:
+                            const Size.fromHeight(AppSizes.buttonHeight),
                       ),
                     ),
                   ],

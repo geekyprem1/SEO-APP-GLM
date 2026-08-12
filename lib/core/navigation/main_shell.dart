@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/app_sizes.dart';
 import '../services/ai/cloud_functions_ai_service.dart';
 import '../../features/content_studio/screens/content_studio_screen.dart';
 import '../../features/home/screens/home_screen.dart';
@@ -110,13 +111,25 @@ class _NavItem extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(selected ? selectedIcon : icon, size: 24, color: color),
-          const SizedBox(height: 4),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.primarySoft : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+            ),
+            child: Icon(
+              selected ? selectedIcon : icon,
+              size: 24,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: GoogleFonts.inter(
               fontSize: 12,
-              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
               color: color,
             ),
           ),

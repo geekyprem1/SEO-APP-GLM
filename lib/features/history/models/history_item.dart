@@ -23,6 +23,18 @@ enum HistoryType {
   seo,
   @HiveField(8)
   contentStudio,
+  @HiveField(9)
+  hook,
+  @HiveField(10)
+  captions,
+  @HiveField(11)
+  chapters,
+  @HiveField(12)
+  cta,
+  @HiveField(13)
+  competitor,
+  @HiveField(14)
+  series,
 }
 
 /// Polymorphic history entry stored in Hive.

@@ -11,7 +11,13 @@ enum AiFeature {
   trending('trending', 20),
   seo('seo', 10),
   thumbnail('thumbnail', 3),
-  contentStudio('contentStudio', 10);
+  contentStudio('contentStudio', 10),
+  hook('hook', 20),
+  captions('captions', 20),
+  chapters('chapters', 10),
+  cta('cta', 20),
+  competitor('competitor', 20),
+  series('series', 10);
 
   const AiFeature(this.id, this.dailyLimit);
 

@@ -43,7 +43,10 @@ class ErrorState extends StatelessWidget {
             if (isQuota) ...[
               const SizedBox(height: AppSizes.lg),
               FilledButton.icon(
-                onPressed: () => showProUpgradeDialog(context),
+                onPressed: () => showProUpgradeDialog(
+                  context,
+                  reason: ProUpgradeReason.quotaHit,
+                ),
                 icon: const Icon(Icons.workspace_premium_rounded),
                 label: const Text('Upgrade to Pro'),
               ),

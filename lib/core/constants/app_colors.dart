@@ -12,15 +12,18 @@ class AppColors {
   static const Color primary = Color(0xFFE53935);
   static const Color primaryDark = Color(0xFFC62828);
   static const Color accent = Color(0xFFFF6B6B);
-  static const Color background = Color(0xFFFAFAFA);
+  static const Color background = Color(0xFFFAF8F8);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color border = Color(0xFFECECEC);
+  static const Color border = Color(0xFFEDE4E4);
   static const Color textPrimary = Color(0xFF111111);
   static const Color textSecondary = Color(0xFF6B7280);
-  static const Color divider = Color(0xFFF1F1F1);
+  static const Color divider = Color(0xFFF3EDED);
 
-  /// Light tint used behind icons (light red).
+  /// Light tint used behind icons / plan chips.
   static const Color primarySoft = Color(0xFFFDECEA);
+
+  /// Very light warm wash for home hero atmosphere.
+  static const Color heroWash = Color(0xFFFFF5F4);
 
   // Light scheme
   static const Color lightPrimary = primary;
