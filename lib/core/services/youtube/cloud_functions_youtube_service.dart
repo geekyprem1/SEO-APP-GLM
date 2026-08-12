@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../config/app_constants.dart';
 import '../../error/error_handler.dart';
 import '../../error/exceptions.dart';
+import '../../utils/json_utils.dart';
 import 'youtube_models.dart';
 import 'youtube_service.dart';
 
@@ -93,7 +94,7 @@ class CloudFunctionsYouTubeService implements YouTubeService {
       channelId: json['channelId'] as String?,
       channelTitle: json['channelTitle'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
-      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
+      tags: JsonUtils.stringList(json['tags']),
       viewCount: json['viewCount'] as int?,
       likeCount: json['likeCount'] as int?,
       commentCount: json['commentCount'] as int?,

@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 /// The output of the Title Generator feature.
 @immutable
 class GeneratedTitle {
@@ -25,12 +27,11 @@ class GeneratedTitle {
     required Map<String, dynamic> json,
     required DateTime createdAt,
   }) {
-    final list = json['titles'] as List<dynamic>? ?? [];
     return GeneratedTitle(
       id: id,
       topic: topic,
       language: language,
-      titles: list.cast<String>(),
+      titles: JsonUtils.stringList(json['titles']),
       createdAt: createdAt,
     );
   }
@@ -50,7 +51,7 @@ class GeneratedTitle {
       id: json['id'] as String,
       topic: json['topic'] as String,
       language: json['language'] as String,
-      titles: (json['titles'] as List<dynamic>).cast<String>(),
+      titles: JsonUtils.stringList(json['titles']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

@@ -47,6 +47,7 @@ class _ChaptersGeneratorScreenState
   Language _language = LanguageCatalog.defaultLanguage;
   String _duration = _durations[1];
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -56,8 +57,7 @@ class _ChaptersGeneratorScreenState
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(chaptersProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
           name: 'chapters_generate_tapped',
@@ -67,12 +67,19 @@ class _ChaptersGeneratorScreenState
           },
         );
 
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(chaptersProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           language: _language.name,
           durationLabel: _duration,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _copySingle(String text) {
@@ -154,7 +161,7 @@ class _ChaptersGeneratorScreenState
                       AppButton(
                         label: 'Generate Chapters',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && chaptersState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

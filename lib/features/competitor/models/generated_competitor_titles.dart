@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 @immutable
 class GeneratedCompetitorTitles {
   const GeneratedCompetitorTitles({
@@ -27,7 +29,7 @@ class GeneratedCompetitorTitles {
       id: id,
       sourceTitle: sourceTitle,
       language: language,
-      titles: (json['titles'] as List<dynamic>? ?? []).cast<String>(),
+      titles: JsonUtils.stringList(json['titles']),
       createdAt: createdAt,
     );
   }
@@ -45,7 +47,7 @@ class GeneratedCompetitorTitles {
       id: json['id'] as String,
       sourceTitle: json['sourceTitle'] as String,
       language: json['language'] as String,
-      titles: (json['titles'] as List<dynamic>).cast<String>(),
+      titles: JsonUtils.stringList(json['titles']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

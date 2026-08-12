@@ -38,6 +38,7 @@ class _ThumbnailGeneratorScreenState
   Category _category = CategoryCatalog.defaultCategory;
   ThumbnailStyle _style = ThumbnailStyle.vibrant;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
   bool _isDownloading = false;
 
   @override
@@ -48,19 +49,25 @@ class _ThumbnailGeneratorScreenState
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(thumbnailProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'thumbnail_generate_tapped',
       parameters: {'category': _category.id, 'style': _style.name},
     );
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(thumbnailProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           category: _category.name,
           style: _style,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   Future<void> _download() async {
@@ -141,7 +148,7 @@ class _ThumbnailGeneratorScreenState
                       AppButton(
                         label: 'Generate Thumbnail',
                         icon: Icons.image_rounded,
-                        isLoading: _hasGenerated && thumbState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

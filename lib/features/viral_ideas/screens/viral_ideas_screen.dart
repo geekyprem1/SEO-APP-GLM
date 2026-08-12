@@ -27,20 +27,27 @@ class _ViralIdeasScreenState extends ConsumerState<ViralIdeasScreen> {
   Category _category = CategoryCatalog.defaultCategory;
   Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   Future<void> _generate() async {
-    final state = ref.read(viralIdeasProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'viral_ideas_generate_tapped',
       parameters: {'category': _category.id, 'language': _language.code},
     );
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(viralIdeasProvider.notifier).generate(
           category: _category.name,
           language: _language.name,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -92,7 +99,7 @@ class _ViralIdeasScreenState extends ConsumerState<ViralIdeasScreen> {
                     AppButton(
                       label: 'Generate Ideas',
                       icon: Icons.local_fire_department_rounded,
-                      isLoading: _hasGenerated && ideasState.isLoading,
+                      isLoading: _isSubmitting,
                       onPressed: _generate,
                     ),
                   ],

@@ -39,6 +39,7 @@ class _CaptionsGeneratorScreenState
   final _formKey = GlobalKey<FormState>();
   Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -49,15 +50,18 @@ class _CaptionsGeneratorScreenState
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(captionsProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
           name: 'captions_generate_tapped',
           parameters: {'language': _language.code},
         );
 
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(captionsProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           language: _language.name,
@@ -65,6 +69,9 @@ class _CaptionsGeneratorScreenState
               ? null
               : _contextController.text.trim(),
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _copySingle(String text) {
@@ -144,7 +151,7 @@ class _CaptionsGeneratorScreenState
                       AppButton(
                         label: 'Generate Captions',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && captionsState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

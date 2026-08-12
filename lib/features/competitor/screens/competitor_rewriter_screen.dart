@@ -37,6 +37,7 @@ class _CompetitorRewriterScreenState
   final _formKey = GlobalKey<FormState>();
   Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -46,19 +47,25 @@ class _CompetitorRewriterScreenState
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(competitorProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
           name: 'competitor_generate_tapped',
           parameters: {'language': _language.code},
         );
 
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(competitorProvider.notifier).generate(
           sourceTitle: Validators.normalize(_titleController.text),
           language: _language.name,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _copy(String text) {
@@ -119,7 +126,7 @@ class _CompetitorRewriterScreenState
                       AppButton(
                         label: 'Rewrite Titles',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && state.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

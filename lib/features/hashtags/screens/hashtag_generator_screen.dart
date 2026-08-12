@@ -24,6 +24,7 @@ class _HashtagGeneratorScreenState extends ConsumerState<HashtagGeneratorScreen>
   final _topicController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -33,14 +34,20 @@ class _HashtagGeneratorScreenState extends ConsumerState<HashtagGeneratorScreen>
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(hashtagProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'hashtag_generate_tapped');
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(hashtagProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -93,7 +100,7 @@ class _HashtagGeneratorScreenState extends ConsumerState<HashtagGeneratorScreen>
                       AppButton(
                         label: 'Generate Hashtags',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && hashtagState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

@@ -1,3 +1,4 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart' as firebase_core;
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
@@ -65,6 +66,13 @@ class ErrorHandler {
       return _mapPlatformError(error);
     }
 
+    // Callable Cloud Functions errors (quota / rate-limit / budget).
+    // Server throws HttpsError; the client receives FirebaseFunctionsException
+    // with details.errorCode — not a success body with an `error` field.
+    if (error is FirebaseFunctionsException) {
+      return _mapFunctionsError(error);
+    }
+
     // Firebase auth errors.
     if (error is firebase_auth.FirebaseAuthException) {
       return FirebaseFailure(
@@ -91,6 +99,61 @@ class ErrorHandler {
       );
     }
     return UnknownFailure(message: message);
+  }
+
+  Failure _mapFunctionsError(FirebaseFunctionsException error) {
+    final details = error.details;
+    String? errorCode;
+    String? feature;
+    if (details is Map) {
+      final map = Map<Object?, Object?>.from(details);
+      errorCode = map['errorCode']?.toString();
+      feature = map['feature']?.toString();
+    }
+
+    final message = (error.message != null && error.message!.trim().isNotEmpty)
+        ? error.message!
+        : 'Something went wrong on our end.';
+
+    switch (errorCode) {
+      case 'QUOTA_EXCEEDED':
+        return QuotaExceededFailure(
+          feature: feature ?? 'feature',
+          message: message,
+        );
+      case 'BUDGET_EXCEEDED':
+        return BudgetExceededFailure(message: message);
+      case 'RATE_LIMIT':
+        return RateLimitFailure(message: message);
+      case 'API_ERROR':
+        return ApiFailure(message: message, code: errorCode);
+    }
+
+    // Fallback when details are missing (older deploys / network wrappers).
+    final code = error.code;
+    final lower = message.toLowerCase();
+    if (code == 'resource-exhausted') {
+      if (lower.contains('too many requests') || lower.contains('wait')) {
+        return RateLimitFailure(message: message);
+      }
+      if (lower.contains('daily limit reached') &&
+          !lower.contains('upgrade') &&
+          !lower.contains('feature')) {
+        return BudgetExceededFailure(message: message);
+      }
+      return QuotaExceededFailure(feature: feature ?? 'feature', message: message);
+    }
+    if (code == 'unauthenticated') {
+      return FirebaseFailure(message: message, code: code);
+    }
+    if (code == 'invalid-argument') {
+      return ValidationFailure(message: message);
+    }
+    if (code == 'unavailable' || code == 'deadline-exceeded') {
+      return NetworkFailure(message: message);
+    }
+
+    return ApiFailure(message: message, code: code);
   }
 
   Failure _mapDioError(DioException error) {

@@ -37,6 +37,7 @@ class _HookGeneratorScreenState extends ConsumerState<HookGeneratorScreen> {
   final _formKey = GlobalKey<FormState>();
   Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -46,19 +47,25 @@ class _HookGeneratorScreenState extends ConsumerState<HookGeneratorScreen> {
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(hookProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
           name: 'hook_generate_tapped',
           parameters: {'language': _language.code},
         );
 
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(hookProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           language: _language.name,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _copySingle(String text) {
@@ -131,7 +138,7 @@ class _HookGeneratorScreenState extends ConsumerState<HookGeneratorScreen> {
                       AppButton(
                         label: 'Generate Hooks',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && hookState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

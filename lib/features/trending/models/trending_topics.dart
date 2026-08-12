@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 /// The output of the Trending Topics feature.
 @immutable
 class TrendingTopics {
@@ -27,13 +29,12 @@ class TrendingTopics {
     required Map<String, dynamic> json,
     required DateTime createdAt,
   }) {
-    final list = json['topics'] as List<dynamic>? ?? [];
     return TrendingTopics(
       id: id,
       category: category,
       country: country,
       language: language,
-      topics: list.cast<String>(),
+      topics: JsonUtils.stringList(json['topics']),
       createdAt: createdAt,
     );
   }
@@ -53,7 +54,7 @@ class TrendingTopics {
       category: json['category'] as String,
       country: json['country'] as String,
       language: json['language'] as String,
-      topics: (json['topics'] as List<dynamic>).cast<String>(),
+      topics: JsonUtils.stringList(json['topics']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

@@ -29,10 +29,10 @@ class _TrendingScreenState extends ConsumerState<TrendingScreen> {
   Country _country = CountryCatalog.defaultCountry;
   Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   Future<void> _generate() async {
-    final state = ref.read(trendingProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'trending_generate_tapped',
@@ -42,12 +42,19 @@ class _TrendingScreenState extends ConsumerState<TrendingScreen> {
         'language': _language.code,
       },
     );
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(trendingProvider.notifier).generate(
           category: _category.name,
           country: _country.name,
           language: _language.name,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -108,7 +115,7 @@ class _TrendingScreenState extends ConsumerState<TrendingScreen> {
                     AppButton(
                       label: 'Generate Topics',
                       icon: Icons.trending_up_rounded,
-                      isLoading: _hasGenerated && trendingState.isLoading,
+                      isLoading: _isSubmitting,
                       onPressed: _generate,
                     ),
                   ],

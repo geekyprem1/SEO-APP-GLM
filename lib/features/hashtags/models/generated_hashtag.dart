@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 /// The output of the Hashtag Generator feature.
 @immutable
 class GeneratedHashtag {
@@ -21,11 +23,10 @@ class GeneratedHashtag {
     required Map<String, dynamic> json,
     required DateTime createdAt,
   }) {
-    final list = json['hashtags'] as List<dynamic>? ?? [];
     return GeneratedHashtag(
       id: id,
       topic: topic,
-      hashtags: list.cast<String>(),
+      hashtags: JsonUtils.stringList(json['hashtags']),
       createdAt: createdAt,
     );
   }
@@ -41,7 +42,7 @@ class GeneratedHashtag {
     return GeneratedHashtag(
       id: json['id'] as String,
       topic: json['topic'] as String,
-      hashtags: (json['hashtags'] as List<dynamic>).cast<String>(),
+      hashtags: JsonUtils.stringList(json['hashtags']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

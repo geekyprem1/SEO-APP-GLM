@@ -26,7 +26,10 @@ class AppDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // `value` remains the controlled-selection API; `initialValue` is for
+    // one-shot form defaults and would break parent-driven dropdowns.
     return DropdownButtonFormField<T>(
+      // ignore: deprecated_member_use
       value: value,
       decoration: InputDecoration(
         labelText: label,

@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 /// Output of the Hook Generator feature.
 @immutable
 class GeneratedHook {
@@ -26,14 +28,12 @@ class GeneratedHook {
     required Map<String, dynamic> json,
     required DateTime createdAt,
   }) {
-    final hooks = (json['hooks'] as List<dynamic>? ?? []).cast<String>();
-    final tips = (json['styleTips'] as List<dynamic>? ?? []).cast<String>();
     return GeneratedHook(
       id: id,
       topic: topic,
       language: language,
-      hooks: hooks,
-      styleTips: tips,
+      hooks: JsonUtils.stringList(json['hooks']),
+      styleTips: JsonUtils.stringList(json['styleTips']),
       createdAt: createdAt,
     );
   }
@@ -52,8 +52,8 @@ class GeneratedHook {
       id: json['id'] as String,
       topic: json['topic'] as String,
       language: json['language'] as String,
-      hooks: (json['hooks'] as List<dynamic>).cast<String>(),
-      styleTips: (json['styleTips'] as List<dynamic>? ?? []).cast<String>(),
+      hooks: JsonUtils.stringList(json['hooks']),
+      styleTips: JsonUtils.stringList(json['styleTips']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

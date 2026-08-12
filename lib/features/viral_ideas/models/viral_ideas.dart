@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 /// The output of the Viral Shorts Ideas feature.
 @immutable
 class ViralIdeas {
@@ -24,12 +26,11 @@ class ViralIdeas {
     required Map<String, dynamic> json,
     required DateTime createdAt,
   }) {
-    final list = json['ideas'] as List<dynamic>? ?? [];
     return ViralIdeas(
       id: id,
       category: category,
       language: language,
-      ideas: list.cast<String>(),
+      ideas: JsonUtils.stringList(json['ideas']),
       createdAt: createdAt,
     );
   }
@@ -47,7 +48,7 @@ class ViralIdeas {
       id: json['id'] as String,
       category: json['category'] as String,
       language: json['language'] as String,
-      ideas: (json['ideas'] as List<dynamic>).cast<String>(),
+      ideas: JsonUtils.stringList(json['ideas']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

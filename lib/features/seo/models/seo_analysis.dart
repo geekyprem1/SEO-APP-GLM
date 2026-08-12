@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 /// The output of the SEO Analysis feature.
 @immutable
 class SeoAnalysis {
@@ -56,15 +58,12 @@ class SeoAnalysis {
       description: metadata['description'] as String?,
       channelTitle: metadata['channelTitle'] as String?,
       thumbnailUrl: metadata['thumbnailUrl'] as String?,
-      tags: (metadata['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
+      tags: JsonUtils.stringList(metadata['tags']),
       viewCount: metadata['viewCount'] as int?,
       likeCount: metadata['likeCount'] as int?,
       commentCount: metadata['commentCount'] as int?,
       score: (analysis['score'] as num?)?.toInt() ?? 0,
-      suggestions: (analysis['suggestions'] as List<dynamic>?)
-              ?.map((e) => e.toString())
-              .toList() ??
-          const [],
+      suggestions: JsonUtils.stringList(analysis['suggestions']),
       createdAt: createdAt,
     );
   }
@@ -95,12 +94,12 @@ class SeoAnalysis {
       description: json['description'] as String?,
       channelTitle: json['channelTitle'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
-      tags: (json['tags'] as List<dynamic>?)?.cast<String>() ?? const [],
+      tags: JsonUtils.stringList(json['tags']),
       viewCount: json['viewCount'] as int?,
       likeCount: json['likeCount'] as int?,
       commentCount: json['commentCount'] as int?,
       score: json['score'] as int? ?? 0,
-      suggestions: (json['suggestions'] as List<dynamic>?)?.cast<String>() ?? const [],
+      suggestions: JsonUtils.stringList(json['suggestions']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

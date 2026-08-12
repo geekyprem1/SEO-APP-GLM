@@ -43,6 +43,7 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
   Tone _tone = ToneCatalog.defaultTone;
   late ContentDuration _duration = DurationCatalog.defaultFor(_format);
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -61,9 +62,8 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
 
   Future<void> _generate() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(contentStudioProvider);
     // Prevent a second request while one is pending (Req 4.1).
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'content_studio_generate_tapped',
@@ -75,7 +75,11 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
       },
     );
 
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(contentStudioProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           format: _format,
@@ -83,6 +87,9 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
           tone: _tone,
           duration: _duration,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -178,7 +185,7 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
                       AppButton(
                         label: 'Generate Package',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && studioState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],

@@ -28,6 +28,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
   final _urlController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -37,14 +38,20 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
 
   Future<void> _analyze() async {
     if (!_formKey.currentState!.validate()) return;
-    final state = ref.read(seoProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'seo_analyze_tapped');
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(seoProvider.notifier).analyze(
           videoUrl: Validators.normalize(_urlController.text),
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   @override
@@ -87,7 +94,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
                       AppButton(
                         label: 'Analyze SEO',
                         icon: Icons.analytics_rounded,
-                        isLoading: _hasGenerated && seoState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _analyze,
                       ),
                     ],

@@ -116,8 +116,10 @@ async function getUserPlan(uid) {
 }
 
 /**
- * Checks per-feature daily quota for the user, based on their plan.
- * Returns current count.
+ * Atomically reserves one unit of per-feature daily quota for the user.
+ * Increments the counter inside a transaction so concurrent requests cannot
+ * both pass a soft read-check and overshoot the plan limit.
+ * Returns the new count after reservation.
  */
 async function checkQuota(uid, feature) {
   const plan = await getUserPlan(uid);
@@ -125,34 +127,55 @@ async function checkQuota(uid, feature) {
 
   const dateKey = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
   const ref = db.collection('users').doc(uid).collection('usage').doc(dateKey);
-  const snap = await ref.get();
 
-  const current = snap.exists ? (snap.data()[feature] || 0) : 0;
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const current = snap.exists ? (snap.data()[feature] || 0) : 0;
 
-  if (current >= limit) {
-    throw new functionsHttpsError(
-      'resource-exhausted',
-      plan === 'pro'
-        ? `Daily limit for ${feature} reached. Try tomorrow.`
-        : `Free limit reached. Upgrade to Pro for more.`,
-      { errorCode: 'QUOTA_EXCEEDED', feature, plan }
-    );
-  }
+    if (current >= limit) {
+      throw functionsHttpsError(
+        'resource-exhausted',
+        plan === 'pro'
+          ? `Daily limit for ${feature} reached. Try tomorrow.`
+          : `Free limit reached. Upgrade to Pro for more.`,
+        { errorCode: 'QUOTA_EXCEEDED', feature, plan }
+      );
+    }
 
-  return current;
+    const next = current + 1;
+    tx.set(ref, { [feature]: next }, { merge: true });
+    return next;
+  });
 }
 
 /**
- * Increments the per-feature usage counter.
+ * Refunds one reserved quota unit (e.g. when AI generation fails after reserve).
+ * Never throws — best-effort so a refund glitch does not mask the original error.
+ */
+async function releaseQuota(uid, feature) {
+  try {
+    const dateKey = new Date().toISOString().slice(0, 10);
+    const ref = db.collection('users').doc(uid).collection('usage').doc(dateKey);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const current = snap.exists ? (snap.data()[feature] || 0) : 0;
+      if (current <= 0) return;
+      tx.set(ref, { [feature]: current - 1 }, { merge: true });
+    });
+  } catch (err) {
+    // Logged by caller if needed; do not rethrow.
+  }
+}
+
+/**
+ * @deprecated Prefer [checkQuota] which reserves atomically. Kept for callers
+ * that still increment after success; no-ops when reservation already happened.
  */
 async function incrementUsage(uid, feature) {
-  const dateKey = new Date().toISOString().slice(0, 10);
-  const ref = db.collection('users').doc(uid).collection('usage').doc(dateKey);
-
-  await ref.set(
-    { [feature]: admin.firestore.FieldValue.increment(1) },
-    { merge: true }
-  );
+  // No-op: quota is reserved in checkQuota. Retained so older call sites
+  // that still invoke incrementUsage do not double-count.
+  void uid;
+  void feature;
 }
 
 /**
@@ -366,6 +389,7 @@ module.exports = {
   checkRateLimit,
   getUserPlan,
   checkQuota,
+  releaseQuota,
   incrementUsage,
   checkBudget,
   addCost,

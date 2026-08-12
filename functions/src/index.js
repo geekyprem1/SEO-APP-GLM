@@ -30,6 +30,7 @@ const {
   verifyAuth,
   checkRateLimit,
   checkQuota,
+  releaseQuota,
   incrementUsage,
   checkBudget,
   addCost,
@@ -84,7 +85,8 @@ exports.generateContent = onCall(
     const { feature, prompt, schema, maxTokens, temperature } =
       validateGenerateContent(request.data);
 
-    // 3–6. Prechecks in parallel (independent Firestore reads/writes).
+    // 3–5. Prechecks (rate / budget / cache). Quota is reserved only after a
+    // cache miss so repeated identical prompts do not burn free daily slots.
     const cacheKey = buildCacheKey(uid, {
       kind: 'text',
       feature,
@@ -94,9 +96,8 @@ exports.generateContent = onCall(
       temperature,
     });
 
-    const [, , , cached] = await Promise.all([
+    const [, , cached] = await Promise.all([
       checkRateLimit(uid),
-      checkQuota(uid, feature),
       checkBudget(),
       getCache(cacheKey),
     ]);
@@ -106,7 +107,9 @@ exports.generateContent = onCall(
       return cached;
     }
 
-    // 7. Call OpenRouter
+    // 6. Atomically reserve quota, then call OpenRouter.
+    await checkQuota(uid, feature);
+
     try {
       const result = await generateText({ prompt, schema, maxTokens, temperature });
       const cost = ESTIMATED_COSTS.text;
@@ -118,7 +121,8 @@ exports.generateContent = onCall(
         estimatedCost: cost,
       };
 
-      // 8. Persist side-effects in parallel (must await — CF may freeze after return).
+      // 7. Persist side-effects in parallel (must await — CF may freeze after return).
+      // Quota was already reserved in checkQuota; incrementUsage is a no-op.
       await Promise.all([
         setCache(cacheKey, response),
         incrementUsage(uid, feature),
@@ -135,6 +139,8 @@ exports.generateContent = onCall(
 
       return response;
     } catch (error) {
+      // Refund the reserved slot so a provider failure does not eat free quota.
+      await releaseQuota(uid, feature);
       // Log full detail server-side; return a generic message to the client.
       logger.error('generateContent failed', {
         uid,
@@ -172,7 +178,7 @@ exports.generateImage = onCall(
     const { feature, prompt, width, height } =
       validateGenerateImage(request.data);
 
-    // 3–6. Prechecks in parallel.
+    // 3–5. Prechecks (rate / budget / cache). Reserve quota only on cache miss.
     const cacheKey = buildCacheKey(uid, {
       kind: 'image',
       feature,
@@ -181,9 +187,8 @@ exports.generateImage = onCall(
       height,
     });
 
-    const [, , , cached] = await Promise.all([
+    const [, , cached] = await Promise.all([
       checkRateLimit(uid),
-      checkQuota(uid, feature),
       checkBudget(),
       getCache(cacheKey),
     ]);
@@ -193,7 +198,9 @@ exports.generateImage = onCall(
       return cached;
     }
 
-    // 7. Call SiliconFlow (primary) → Replicate (fallback)
+    await checkQuota(uid, feature);
+
+    // 6. Call SiliconFlow (primary) → Replicate (fallback)
     let result;
     let usedModel;
     try {
@@ -211,6 +218,7 @@ exports.generateImage = onCall(
         usedModel = IMAGE_MODEL_REPLICATE;
         logger.info('Image generated via Replicate (fallback)', { uid, feature });
       } catch (repError) {
+        await releaseQuota(uid, feature);
         logger.error('Both image providers failed', {
           uid,
           feature,
@@ -234,6 +242,7 @@ exports.generateImage = onCall(
       estimatedCost: cost,
     };
 
+    // Quota already reserved; incrementUsage is a no-op.
     await Promise.all([
       setCache(cacheKey, response),
       incrementUsage(uid, feature),

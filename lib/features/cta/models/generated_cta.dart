@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/utils/json_utils.dart';
+
 @immutable
 class GeneratedCta {
   const GeneratedCta({
@@ -23,12 +25,11 @@ class GeneratedCta {
     required Map<String, dynamic> json,
     required DateTime createdAt,
   }) {
-    final list = (json['ctas'] as List<dynamic>? ?? []).cast<String>();
     return GeneratedCta(
       id: id,
       topic: topic,
       language: language,
-      ctas: list,
+      ctas: JsonUtils.stringList(json['ctas']),
       createdAt: createdAt,
     );
   }
@@ -46,7 +47,7 @@ class GeneratedCta {
       id: json['id'] as String,
       topic: json['topic'] as String,
       language: json['language'] as String,
-      ctas: (json['ctas'] as List<dynamic>).cast<String>(),
+      ctas: JsonUtils.stringList(json['ctas']),
       createdAt: DateTime.parse(json['createdAt'] as String),
     );
   }

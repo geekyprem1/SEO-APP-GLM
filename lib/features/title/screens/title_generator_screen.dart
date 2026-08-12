@@ -39,6 +39,7 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
   final _formKey = GlobalKey<FormState>();
   Language _language = LanguageCatalog.defaultLanguage;
   bool _hasGenerated = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -50,19 +51,25 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     // Prevent duplicate requests.
-    final state = ref.read(titleProvider);
-    if (_hasGenerated && state.isLoading) return;
+    if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
       name: 'title_generate_tapped',
       parameters: {'language': _language.code},
     );
 
-    setState(() => _hasGenerated = true);
+    setState(() {
+      _hasGenerated = true;
+      _isSubmitting = true;
+    });
+    try {
     await ref.read(titleProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           language: _language.name,
         );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   void _copySingle(String title) {
@@ -132,7 +139,7 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
                       AppButton(
                         label: 'Generate Titles',
                         icon: Icons.auto_awesome_rounded,
-                        isLoading: _hasGenerated && titleState.isLoading,
+                        isLoading: _isSubmitting,
                         onPressed: _generate,
                       ),
                     ],
