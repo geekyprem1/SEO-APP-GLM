@@ -8,6 +8,7 @@ import '../../../core/services/ai/cloud_functions_ai_service.dart';
 import '../../../shared/models/content_duration.dart';
 import '../../../shared/models/content_format.dart';
 import '../../../shared/models/tone.dart';
+import '../../channel_profile/models/channel_profile.dart';
 import '../../history/models/history_item.dart';
 import '../../history/repository/history_repository.dart';
 import '../models/content_package.dart';
@@ -20,6 +21,7 @@ abstract class ContentStudioRepository {
     required String language,
     required Tone tone,
     required ContentDuration duration,
+    ChannelProfile? channelProfile,
   });
 
   Future<void> saveToHistory(ContentPackage package);
@@ -43,6 +45,7 @@ class ContentStudioRepositoryImpl implements ContentStudioRepository {
     required String language,
     required Tone tone,
     required ContentDuration duration,
+    ChannelProfile? channelProfile,
   }) async {
     try {
       final request = ContentStudioPromptBuilder.build(
@@ -51,6 +54,7 @@ class ContentStudioRepositoryImpl implements ContentStudioRepository {
         language: language,
         tone: tone,
         duration: duration,
+        channelProfile: channelProfile,
       );
       final result = await _aiService.generate(request: request);
 

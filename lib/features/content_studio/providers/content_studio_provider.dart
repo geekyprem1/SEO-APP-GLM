@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/models/content_duration.dart';
 import '../../../shared/models/content_format.dart';
 import '../../../shared/models/tone.dart';
+import '../../channel_profile/models/channel_profile.dart';
 import '../models/content_package.dart';
 import '../repository/content_studio_repository.dart';
 
@@ -28,6 +29,7 @@ class ContentStudioNotifier extends StateNotifier<ContentStudioState> {
     required String language,
     required Tone tone,
     required ContentDuration duration,
+    ChannelProfile? channelProfile,
   }) async {
     state = const AsyncValue.loading();
     try {
@@ -37,6 +39,7 @@ class ContentStudioNotifier extends StateNotifier<ContentStudioState> {
         language: language,
         tone: tone,
         duration: duration,
+        channelProfile: channelProfile,
       );
       _lastResult = result;
       state = AsyncValue.data(result);

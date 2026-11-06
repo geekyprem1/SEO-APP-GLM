@@ -22,6 +22,7 @@ class AppRoutes {
   static const String history = '/history';
   static const String historyDetail = '/history/:id';
   static const String settings = '/settings';
+  static const String channelProfile = '/channel-profile';
 
   /// Builds a history detail path with an ID.
   static String historyDetailFor(String id) => '/history/$id';

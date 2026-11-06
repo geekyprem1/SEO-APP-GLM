@@ -3,13 +3,16 @@ import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_duration.dart';
 import '../../../shared/models/content_format.dart';
 import '../../../shared/models/tone.dart';
+import '../../channel_profile/models/channel_profile.dart';
 
 /// Builds the AI prompt for the AI Content Studio.
 ///
 /// Produces a single request that returns an all-in-one content package
 /// (titles, hook, script, description, keywords, hashtags, thumbnail text
 /// ideas, and CTA) tailored to the selected format, language, tone, and
-/// duration.
+/// duration. When the creator has saved a [ChannelProfile], its niche,
+/// audience and style notes are woven into the prompt so every generation
+/// already matches their channel.
 class ContentStudioPromptBuilder {
   ContentStudioPromptBuilder._();
 
@@ -24,6 +27,7 @@ class ContentStudioPromptBuilder {
     required String language,
     required Tone tone,
     required ContentDuration duration,
+    ChannelProfile? channelProfile,
   }) {
     final safeTopic = PromptUtils.clean(topic, field: 'topic');
     final platform =
@@ -33,9 +37,11 @@ class ContentStudioPromptBuilder {
         ? '- "script": a complete, word-for-word narration script that is ${duration.promptHint}. Keep it tight and punchy.'
         : '- "script": a structured script that is ${duration.promptHint}. Use an intro, 3–5 clearly labelled sections with key talking points, and an outro. Do NOT write every word verbatim — keep it as a usable outline.';
 
+    final channelContext = _channelContext(channelProfile);
+
     final prompt = '''
 You are an expert YouTube content strategist, scriptwriter, and SEO specialist. Create a complete, ready-to-publish content package for a $platform about "$safeTopic".
-
+$channelContext
 Write ALL text in $language, using a ${tone.promptHint} tone.
 
 Return a JSON object with EXACTLY these fields:
@@ -66,5 +72,27 @@ $schema
       maxTokens: 1000,
       temperature: 0.7,
     );
+  }
+
+  /// Builds the channel-context paragraph injected into the prompt, or an
+  /// empty string when no profile is saved. Only meaningful fields are
+  /// mentioned so the prompt never carries empty instructions.
+  static String _channelContext(ChannelProfile? profile) {
+    if (profile == null || profile.isEmpty) return '\n';
+
+    final lines = <String>[];
+    final niche = profile.niche.trim();
+    final audience = profile.audience.trim();
+    final styleNotes = profile.styleNotes.trim();
+    if (niche.isNotEmpty) lines.add('- Channel niche: $niche');
+    if (audience.isNotEmpty) lines.add('- Target audience: $audience');
+    if (styleNotes.isNotEmpty) lines.add('- Creator style notes: $styleNotes');
+    if (lines.isEmpty) return '\n';
+
+    return '''
+Channel context — this creator's saved profile (tailor the content to it):
+${lines.join('\n')}
+
+''';
   }
 }

@@ -9,6 +9,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../shared/models/user_plan.dart';
 import '../../auth/providers/auth_provider.dart';
+import '../../channel_profile/providers/channel_profile_provider.dart';
 import '../../pro/widgets/pro_upgrade_dialog.dart';
 
 /// Profile tab — user info, plan, plus access to History, Settings, sign out.
@@ -165,6 +166,16 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSizes.lg),
+            // Channel profile (brand memory)
+            _ProfileTile(
+              icon: Icons.video_camera_front_rounded,
+              title: 'Channel Profile',
+              subtitle: ref.watch(channelProfileProvider).isNotEmpty
+                  ? ref.watch(channelProfileProvider).summary
+                  : 'Set your niche, audience & style — reused in every generation',
+              onTap: () => context.push(AppRoutes.channelProfile),
+            ),
+            const SizedBox(height: AppSizes.sm),
             // Menu
             _ProfileTile(
               icon: Icons.history_rounded,

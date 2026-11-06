@@ -15,7 +15,8 @@ class AppDropdown<T> extends StatelessWidget {
     this.enabled = true,
   });
 
-  final T value;
+  /// Currently selected item; null = "not chosen yet" (shows [hint]).
+  final T? value;
   final List<T> items;
   final ValueChanged<T?> onChanged;
   final String? label;
@@ -43,13 +44,20 @@ class AppDropdown<T> extends StatelessWidget {
       );
     }
 
-    final safeValue = items.contains(value) ? value : items.first;
+    // A null [value] is a valid "not chosen yet" state — show the hint
+    // instead of silently selecting the first item. Non-null values that
+    // are missing from the catalog still fall back to the first item.
+    final safeValue =
+        value == null ? null : (items.contains(value) ? value : items.first);
 
     // `value` remains the controlled-selection API; `initialValue` is for
     // one-shot form defaults and would break parent-driven dropdowns.
     return DropdownButtonFormField<T>(
       // ignore: deprecated_member_use
       value: safeValue,
+      hint: safeValue == null
+          ? Text(hint ?? 'Select an option')
+          : null,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

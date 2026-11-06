@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/error/failures.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/common/app_button.dart';
@@ -21,6 +24,7 @@ import '../../../shared/models/content_duration.dart';
 import '../../../shared/models/content_format.dart';
 import '../../../shared/models/language.dart';
 import '../../../shared/models/tone.dart';
+import '../../channel_profile/providers/channel_profile_provider.dart';
 import '../providers/content_studio_provider.dart';
 import '../widgets/content_package_editor.dart';
 
@@ -47,6 +51,10 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
   // Advanced options stay collapsed on first use — the growth findings (P0)
   // say a creator should reach a useful result with just topic + language.
   bool _showAdvanced = false;
+  // When the saved Channel Profile changes a default, the in-form selection
+  // follows until the creator picks one themselves (then it stays manual).
+  bool _languageTouched = false;
+  bool _toneTouched = false;
 
   @override
   void dispose() {
@@ -68,13 +76,24 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
     // Prevent a second request while one is pending (Req 4.1).
     if (_isSubmitting) return;
 
+    final channelProfile = ref.read(channelProfileProvider);
+    // The saved Channel Profile is the default until the creator overrides
+    // it in this form (then the manual pick sticks for the session).
+    final language = (!_languageTouched && channelProfile.language != null)
+        ? channelProfile.language!
+        : _language;
+    final tone = (!_toneTouched && channelProfile.tone != null)
+        ? channelProfile.tone!
+        : _tone;
+
     ref.read(analyticsServiceProvider).logEvent(
       name: 'content_studio_generate_tapped',
       parameters: {
         'format': _format.name,
-        'language': _language.code,
-        'tone': _tone.label,
+        'language': language.code,
+        'tone': tone.label,
         'duration': _duration.label,
+        'channelProfileApplied': channelProfile.isNotEmpty,
       },
     );
 
@@ -86,9 +105,10 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
     await ref.read(contentStudioProvider.notifier).generate(
           topic: Validators.normalize(_topicController.text),
           format: _format,
-          language: _language.name,
-          tone: _tone,
+          language: language.name,
+          tone: tone,
           duration: _duration,
+          channelProfile: channelProfile,
         );
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
@@ -100,6 +120,13 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
     final theme = Theme.of(context);
     final studioState = ref.watch(contentStudioProvider);
     final durationOptions = DurationCatalog.forFormat(_format);
+    final channelProfile = ref.watch(channelProfileProvider);
+    final language = (!_languageTouched && channelProfile.language != null)
+        ? channelProfile.language!
+        : _language;
+    final tone = (!_toneTouched && channelProfile.tone != null)
+        ? channelProfile.tone!
+        : _tone;
 
     return Scaffold(
       appBar: AppBar(title: const Text('AI Content Studio')),
@@ -125,6 +152,50 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
                         ),
                       ),
                       const SizedBox(height: AppSizes.md),
+                      if (channelProfile.isNotEmpty) ...[
+                        InkWell(
+                          onTap: () => context.push(AppRoutes.channelProfile),
+                          borderRadius: BorderRadius.circular(AppSizes.radiusLg),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSizes.md,
+                              vertical: AppSizes.sm + 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primarySoft,
+                              borderRadius:
+                                  BorderRadius.circular(AppSizes.radiusLg),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.video_camera_front_rounded,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                                const SizedBox(width: AppSizes.sm),
+                                Expanded(
+                                  child: Text(
+                                    'Channel profile applied · ${channelProfile.summary}',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.primaryDark,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(
+                                  Icons.chevron_right_rounded,
+                                  size: 18,
+                                  color: AppColors.primary,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                      ],
                       AppTextField(
                         controller: _topicController,
                         label: 'Topic',
@@ -186,23 +257,33 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
                         ),
                         const SizedBox(height: AppSizes.md),
                         AppDropdown<Tone>(
-                          value: _tone,
+                          value: tone,
                           items: ToneCatalog.all,
                           label: 'Tone',
                           itemLabel: (t) => t.label,
                           onChanged: (v) {
-                            if (v != null) setState(() => _tone = v);
+                            if (v != null) {
+                              setState(() {
+                                _tone = v;
+                                _toneTouched = true;
+                              });
+                            }
                           },
                         ),
                         const SizedBox(height: AppSizes.md),
                       ],
                       AppDropdown<Language>(
-                        value: _language,
+                        value: language,
                         items: LanguageCatalog.all,
                         label: 'Language',
                         itemLabel: (l) => l.name,
                         onChanged: (v) {
-                          if (v != null) setState(() => _language = v);
+                          if (v != null) {
+                            setState(() {
+                              _language = v;
+                              _languageTouched = true;
+                            });
+                          }
                         },
                       ),
                       const SizedBox(height: AppSizes.lg),

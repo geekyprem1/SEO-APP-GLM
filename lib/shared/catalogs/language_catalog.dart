@@ -16,4 +16,10 @@ class LanguageCatalog {
   ];
 
   static Language get defaultLanguage => all.first;
+
+  /// Resolves a language by its [code], falling back to the default.
+  static Language byCode(String code) => all.firstWhere(
+        (l) => l.code == code,
+        orElse: () => defaultLanguage,
+      );
 }

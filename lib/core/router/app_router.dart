@@ -25,6 +25,7 @@ import '../../features/series/screens/series_generator_screen.dart';
 import '../../features/history/screens/history_screen.dart';
 import '../../features/history/screens/history_detail_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import '../../features/channel_profile/screens/channel_profile_screen.dart';
 
 /// Provides the GoRouter configuration.
 ///
@@ -180,6 +181,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppRoutes.settings,
         name: 'settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.channelProfile,
+        name: 'channelProfile',
+        builder: (context, state) => const ChannelProfileScreen(),
       ),
     ],
     errorBuilder: (context, state) =>
