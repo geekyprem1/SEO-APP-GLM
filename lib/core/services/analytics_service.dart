@@ -1,4 +1,5 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Abstract analytics service interface.
@@ -24,7 +25,15 @@ class AnalyticsServiceImpl implements AnalyticsService {
   @override
   Future<void> logEvent({required String name, Map<String, Object>? parameters}) {
     if (!_isEnabled()) return Future.value();
-    return _analytics.logEvent(name: name, parameters: parameters ?? const {});
+    // Analytics must never break a user flow: a malformed parameter or a
+    // platform error is swallowed (logged in debug) instead of propagated.
+    return _analytics
+        .logEvent(name: name, parameters: parameters ?? const {})
+        .catchError((Object e) {
+      if (kDebugMode) {
+        debugPrint('AnalyticsService: logEvent "$name" failed — $e');
+      }
+    });
   }
 
   @override

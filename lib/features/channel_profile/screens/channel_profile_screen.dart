@@ -174,11 +174,12 @@ class _ChannelProfileScreenState extends ConsumerState<ChannelProfileScreen> {
       ref.read(analyticsServiceProvider).logEvent(
         name: 'channel_profile_saved',
         parameters: {
-          'hasNiche': profile.niche.isNotEmpty,
-          'hasAudience': profile.audience.isNotEmpty,
+          // Firebase Analytics params must be String or num — no bools.
+          'hasNiche': profile.niche.isNotEmpty ? 'yes' : 'no',
+          'hasAudience': profile.audience.isNotEmpty ? 'yes' : 'no',
           'language': profile.language?.code ?? 'unset',
           'tone': profile.tone?.label ?? 'unset',
-          'hasStyleNotes': profile.styleNotes.isNotEmpty,
+          'hasStyleNotes': profile.styleNotes.isNotEmpty ? 'yes' : 'no',
         },
       );
 

@@ -24,6 +24,7 @@ import 'features/auth/models/auth_user.dart';
 import 'features/auth/repository/auth_repository.dart';
 import 'features/history/models/history_item.dart';
 import 'features/history/repository/history_repository.dart';
+import 'features/projects/repository/project_repository.dart';
 import 'features/settings/providers/settings_provider.dart';
 
 void main() async {
@@ -45,12 +46,17 @@ void main() async {
   // corrupt key/file never bricks startup.
   final hiveEnc = HiveEncryption.instance;
   await hiveEnc.migrateIfNeeded(
-    const [AppConstants.historyBox, AppConstants.settingsBox],
+    const [
+      AppConstants.historyBox,
+      AppConstants.settingsBox,
+      AppConstants.projectsBox,
+    ],
   );
 
   final historyBox =
       await hiveEnc.openEncrypted<HistoryItem>(AppConstants.historyBox);
   final settingsBox = await hiveEnc.openEncrypted(AppConstants.settingsBox);
+  final projectsBox = await hiveEnc.openEncrypted(AppConstants.projectsBox);
 
   // Read the stored analytics/crash-reporting consent (null = not asked yet)
   // so Firebase starts with collection in the user's chosen state.
@@ -83,6 +89,7 @@ void main() async {
       (ref) => HistoryRepositoryImpl(historyBox, ref.watch(errorHandlerProvider)),
     ),
     settingsBoxProvider.overrideWithValue(settingsBox),
+    projectsBoxProvider.overrideWithValue(projectsBox),
   ];
 
   runApp(

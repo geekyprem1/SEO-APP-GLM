@@ -25,6 +25,8 @@ import '../../../shared/models/content_format.dart';
 import '../../../shared/models/language.dart';
 import '../../../shared/models/tone.dart';
 import '../../channel_profile/providers/channel_profile_provider.dart';
+import '../../projects/repository/project_repository.dart';
+import '../models/content_package.dart';
 import '../providers/content_studio_provider.dart';
 import '../widgets/content_package_editor.dart';
 
@@ -93,7 +95,8 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
         'language': language.code,
         'tone': tone.label,
         'duration': _duration.label,
-        'channelProfileApplied': channelProfile.isNotEmpty,
+        // Firebase Analytics params must be String or num — no bools.
+        'channelProfileApplied': channelProfile.isNotEmpty ? 'yes' : 'no',
       },
     );
 
@@ -306,6 +309,28 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
     );
   }
 
+  /// Saves the (edited) package to History and, on success, also upserts it
+  /// as a Draft project — the growth-findings "Saved Projects" workflow:
+  /// every saved package becomes continue-able work in My Projects.
+  Future<bool> _savePackage(ContentPackage edited) async {
+    final saved = await ref
+        .read(contentStudioProvider.notifier)
+        .saveToHistory(edited);
+    if (!saved) return false;
+
+    try {
+      await ref.read(projectRepositoryProvider).upsertFromPackage(edited);
+      ref.read(analyticsServiceProvider).logEvent(
+        name: 'project_saved',
+        parameters: {'topic': edited.topic},
+      );
+    } catch (_) {
+      // History save succeeded; a project-write failure must not read as a
+      // failed save. The next save retries the upsert.
+    }
+    return true;
+  }
+
   Widget _buildResult(ContentStudioState state) {
     if (!_hasGenerated) {
       return const EmptyState(
@@ -325,8 +350,7 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
       data: (package) => ContentPackageEditor(
         key: ValueKey(package.id),
         package: package,
-        onSave: (edited) =>
-            ref.read(contentStudioProvider.notifier).saveToHistory(edited),
+        onSave: (edited) => _savePackage(edited),
       ),
     );
   }

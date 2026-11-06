@@ -10,11 +10,26 @@ import '../../../core/utils/ui_utils.dart';
 import '../../../shared/models/user_plan.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../../channel_profile/providers/channel_profile_provider.dart';
+import '../../projects/models/project.dart';
+import '../../projects/repository/project_repository.dart';
 import '../../pro/widgets/pro_upgrade_dialog.dart';
 
 /// Profile tab — user info, plan, plus access to History, Settings, sign out.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
+
+  /// One-line summary for the My Projects tile, e.g.
+  /// "2 in progress · 5 published" / "No projects yet".
+  static String _projectsSubtitle(List<Project> projects) {
+    if (projects.isEmpty) return 'Draft → Ready → Published';
+    final inProgress = projects.where((p) => p.isInProgress).length;
+    final published = projects.length - inProgress;
+    final parts = <String>[
+      if (inProgress > 0) '$inProgress in progress',
+      if (published > 0) '$published published',
+    ];
+    return parts.isEmpty ? 'No projects yet' : parts.join(' · ');
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -166,6 +181,14 @@ class ProfileScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: AppSizes.lg),
+            // Saved Projects (Draft → Ready → Published workflow)
+            _ProfileTile(
+              icon: Icons.movie_filter_rounded,
+              title: 'My Projects',
+              subtitle: _projectsSubtitle(ref.watch(projectsProvider)),
+              onTap: () => context.push(AppRoutes.projects),
+            ),
+            const SizedBox(height: AppSizes.sm),
             // Channel profile (brand memory)
             _ProfileTile(
               icon: Icons.video_camera_front_rounded,
@@ -223,8 +246,7 @@ class ProfileScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {    final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete account?'),

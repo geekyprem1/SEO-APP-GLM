@@ -10,6 +10,7 @@ class AppConstants {
   // Hive box names
   static const String historyBox = 'history';
   static const String settingsBox = 'settings';
+  static const String projectsBox = 'projects';
   static const String cacheBox = 'cache';
 
   // History limits
