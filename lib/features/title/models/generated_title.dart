@@ -48,11 +48,13 @@ class GeneratedTitle {
   /// Deserializes from history storage JSON.
   factory GeneratedTitle.fromJson(Map<String, dynamic> json) {
     return GeneratedTitle(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       titles: JsonUtils.stringList(json['titles']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

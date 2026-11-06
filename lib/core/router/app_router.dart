@@ -51,16 +51,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       );
       final isOnSplash = state.matchedLocation == AppRoutes.splash;
       final isOnLogin = state.matchedLocation == AppRoutes.login;
-      final isPublicRoute = isOnSplash || isOnLogin;
 
       // Still resolving auth → stay on splash.
       if (authState.isLoading || authState.isRefreshing) {
         return isOnSplash ? null : AppRoutes.splash;
       }
 
-      // Unauthenticated on a protected route → login.
-      if (!isLoggedIn && !isPublicRoute) {
-        return AppRoutes.login;
+      // Auth resolved and signed out → login. The only public route a
+      // signed-out user may stay on is /login itself; in particular the
+      // splash must hand over to login instead of spinning forever.
+      if (!isLoggedIn) {
+        return isOnLogin ? null : AppRoutes.login;
       }
 
       // Returning authenticated user sitting on splash → home.
@@ -167,9 +168,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: AppRoutes.historyDetail,
         name: 'historyDetail',
-        builder: (context, state) => HistoryDetailScreen(
-          id: state.pathParameters['id']!,
-        ),
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          if (id == null || id.isEmpty) {
+            return const _RouteNotFoundScreen();
+          }
+          return HistoryDetailScreen(id: id);
+        },
       ),
       GoRoute(
         path: AppRoutes.settings,
@@ -177,14 +182,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const SettingsScreen(),
       ),
     ],
-    errorBuilder: (context, state) => Scaffold(
-      appBar: AppBar(title: const Text('Page not found')),
-      body: Center(child: Text('No route for ${state.matchedLocation}')),
-    ),
+    errorBuilder: (context, state) =>
+        _RouteNotFoundScreen(location: state.matchedLocation),
   );
 
   return router;
 });
+
+/// Fallback screen for malformed deep links and unknown routes — shown
+/// instead of crashing on a missing/empty path parameter.
+class _RouteNotFoundScreen extends StatelessWidget {
+  const _RouteNotFoundScreen({this.location});
+
+  final String? location;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page not found')),
+      body: Center(
+        child: Text(
+          location == null
+              ? 'This page is not available.'
+              : 'No route for $location',
+        ),
+      ),
+    );
+  }
+}
 
 /// Bridges Riverpod auth-state changes to [GoRouter.refreshListenable].
 ///

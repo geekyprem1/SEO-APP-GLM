@@ -38,10 +38,12 @@ class GeneratedDescription {
 
   factory GeneratedDescription.fromJson(Map<String, dynamic> json) {
     return GeneratedDescription(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      description: json['description'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

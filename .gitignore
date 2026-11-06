@@ -52,3 +52,10 @@ app.*.map.json
 android/key.properties
 *.jks
 *.keystore
+
+# AI agent / IDE tooling workspaces (local only)
+.commandcode/
+.kiro/
+
+# Separate repo with its own remote (github.com/geekyprem1/tubora-website)
+tubora-website/

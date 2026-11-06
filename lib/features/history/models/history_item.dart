@@ -53,14 +53,18 @@ class HistoryItem extends HiveObject {
   });
 
   HistoryItem.fromJson(Map<String, dynamic> json)
-      : id = json['id'] as String,
+      : id = json['id'] as String? ?? '',
         type = HistoryType.values.firstWhere(
           (e) => e.name == json['type'],
           orElse: () => HistoryType.title,
         ),
-        displayTitle = json['displayTitle'] as String,
-        data = Map<String, dynamic>.from(json['data'] as Map),
-        createdAt = DateTime.parse(json['createdAt'] as String);
+        displayTitle = json['displayTitle'] as String? ?? '',
+        data = json['data'] is Map
+            ? Map<String, dynamic>.from(json['data'] as Map)
+            : <String, dynamic>{},
+        createdAt =
+            DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+                DateTime.now();
 
   @HiveField(0)
   final String id;

@@ -3,8 +3,9 @@ class AppConstants {
   AppConstants._();
 
   static const String appName = 'Tubora';
-  static const String appVersion = '1.0.0';
-  static const int appBuildNumber = 1;
+  // Keep in sync with pubspec.yaml `version:`.
+  static const String appVersion = '1.0.3';
+  static const int appBuildNumber = 4;
 
   // Hive box names
   static const String historyBox = 'history';
@@ -36,7 +37,7 @@ class AppConstants {
       'https://tubora.online/privacy.html';
   static const String disclaimerUrl =
       'https://tubora.online/disclaimer.html';
-  static const String contactEmail = 'geekyprem4@gmail.com';
+  static const String contactEmail = 'support@tubora.online';
 
   // Cloud Functions
   static const String generateContentFunction = 'generateContent';

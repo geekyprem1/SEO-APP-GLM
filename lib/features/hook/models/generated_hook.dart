@@ -49,12 +49,14 @@ class GeneratedHook {
 
   factory GeneratedHook.fromJson(Map<String, dynamic> json) {
     return GeneratedHook(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       hooks: JsonUtils.stringList(json['hooks']),
       styleTips: JsonUtils.stringList(json['styleTips']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

@@ -30,7 +30,10 @@ class FirebaseService {
   /// [analyticsConsent] reflects the user's stored choice (null = undecided).
   /// Collection is enabled ONLY when the user has explicitly allowed it, so
   /// nothing is sent to Analytics/Crashlytics before consent (opt-in).
-  static Future<List<Override>> initialize({bool? analyticsConsent}) async {
+  static Future<List<Override>> initialize({
+    bool? analyticsConsent,
+    bool Function()? isCollectionEnabled,
+  }) async {
     await Firebase.initializeApp();
 
     final collectionAllowed = analyticsConsent == true;
@@ -88,10 +91,18 @@ class FirebaseService {
           ref.watch(errorHandlerProvider),
         ),
       ),
-      analyticsServiceProvider
-          .overrideWith((ref) => AnalyticsServiceImpl(analytics)),
-      crashlyticsServiceProvider
-          .overrideWith((ref) => CrashlyticsServiceImpl(crashlytics)),
+      analyticsServiceProvider.overrideWith(
+        (ref) => AnalyticsServiceImpl(
+          analytics,
+          isEnabled: isCollectionEnabled ?? () => collectionAllowed,
+        ),
+      ),
+      crashlyticsServiceProvider.overrideWith(
+        (ref) => CrashlyticsServiceImpl(
+          crashlytics,
+          isEnabled: isCollectionEnabled ?? () => collectionAllowed,
+        ),
+      ),
       aiServiceProvider.overrideWith(
         (ref) => CloudFunctionsAiService(functions, ref.watch(errorHandlerProvider)),
       ),

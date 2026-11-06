@@ -3,21 +3,36 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // A user owns their profile doc but CANNOT set entitlement/abuse fields.
-    // plan, status, lifetime → server-only (Cloud Functions / Admin SDK).
+    // A user owns their profile doc but may only ever write the exact fields
+    // allowlisted below. Everything else — plan, status, lifetime, admin,
+    // role, isPro, uid, email, isAnonymous, createdAt — is server-only, so a
+    // client can never grant itself entitlements or spoof identity fields.
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
 
-      // On create, only allow a clean free profile (no self-granted plan/status).
+      // Fields the client may set when creating its own profile document.
+      function creatableFields() {
+        return ['uid', 'email', 'displayName', 'photoUrl', 'isAnonymous',
+                'plan', 'createdAt', 'lastSeen'];
+      }
+
+      // Fields the client may change after creation.
+      function updatableFields() {
+        return ['displayName', 'photoUrl', 'lastSeen'];
+      }
+
+      // Create: only a clean free profile with a matching uid, no unknown keys.
       allow create: if request.auth != null && request.auth.uid == userId
-                    && (!('plan' in request.resource.data) || request.resource.data.plan == 'free')
-                    && (!('status' in request.resource.data) || request.resource.data.status == 'active')
+                    && request.resource.data.keys().hasOnly(creatableFields())
+                    && request.resource.data.uid == userId
+                    && request.resource.data.plan == 'free'
+                    && !('status' in request.resource.data)
                     && !('lifetime' in request.resource.data);
 
-      // On update, the user may edit profile fields but never entitlement fields.
+      // Update: only the allowlisted mutable fields may differ.
       allow update: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys()
-                         .hasAny(['plan', 'status', 'lifetime']);
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(updatableFields());
 
       allow delete: if false; // deletion happens via deleteMyAccount Cloud Function
 

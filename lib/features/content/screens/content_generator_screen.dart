@@ -37,7 +37,7 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
   }
 
   Future<void> _generate() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
@@ -126,7 +126,14 @@ class _ContentGeneratorScreenState extends ConsumerState<ContentGeneratorScreen>
                 ).animate().fadeIn(duration: 300.ms),
                 const SizedBox(height: AppSizes.lg),
                 GeneratedTextResult(
-                  state: contentState.whenData((data) => data.hook),
+                  // The hook may legitimately be empty (the repository allows it
+                  // when main content exists) — fall back to the first non-empty
+                  // section instead of showing an empty failure.
+                  state: contentState.whenData((data) {
+                    if (data.hook.trim().isNotEmpty) return data.hook;
+                    if (data.mainContent.trim().isNotEmpty) return data.mainContent;
+                    return data.cta;
+                  }),
                   shareText: () => ref.read(contentProvider.notifier).lastResult?.shareText ?? '',
                   onSave: ref.read(contentProvider.notifier).saveToHistory,
                   onRetry: _generate,

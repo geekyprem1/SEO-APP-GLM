@@ -41,17 +41,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!mounted) return;
     setState(() => _isBusy = false);
 
-    final state = ref.read(authStateProvider);
-    state.when(
-      data: (user) {
-        if (user != null) context.go(AppRoutes.home);
-      },
-      error: (error, _) {
-        final msg = error is Failure ? error.message : 'Something went wrong.';
-        UiUtils.showErrorSnackBar(context, msg);
-      },
-      loading: () {},
-    );
+    final actionState = ref.read(authActionProvider);
+    if (actionState.hasError) {
+      final error = actionState.error;
+      final msg = error is Failure ? error.message : 'Something went wrong.';
+      UiUtils.showErrorSnackBar(context, msg);
+      ref.read(authActionProvider.notifier).clearError();
+      return;
+    }
+
+    // The auth stream delivers the signed-in user asynchronously — wait for it
+    // so the router's redirect cannot bounce us back to /login.
+    final signedIn =
+        await ref.read(authStateProvider.notifier).waitUntilAuthenticated();
+    if (mounted && signedIn) context.go(AppRoutes.home);
   }
 
   Future<void> _submitEmail() async {
@@ -59,15 +62,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     await _run(() => _isSignUp
-        ? ref.read(authStateProvider.notifier).signUpWithEmail(email: email, password: password)
-        : ref.read(authStateProvider.notifier).signInWithEmail(email: email, password: password));
+        ? ref.read(authActionProvider.notifier).signUpWithEmail(email: email, password: password)
+        : ref.read(authActionProvider.notifier).signInWithEmail(email: email, password: password));
   }
 
   Future<void> _google() =>
-      _run(() => ref.read(authStateProvider.notifier).signInWithGoogle());
+      _run(() => ref.read(authActionProvider.notifier).signInWithGoogle());
 
   Future<void> _skip() =>
-      _run(() => ref.read(authStateProvider.notifier).signInAnonymously());
+      _run(() => ref.read(authActionProvider.notifier).signInAnonymously());
 
   @override
   Widget build(BuildContext context) {
@@ -108,30 +111,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSizes.xl),
-                AppTextField(
-                  controller: _emailController,
-                  label: 'Email',
-                  hint: 'you@example.com',
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: (v) {
-                    final t = v?.trim() ?? '';
-                    if (t.isEmpty) return 'Email is required';
-                    if (!t.contains('@') || !t.contains('.')) return 'Enter a valid email';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: AppSizes.md),
-                AppTextField(
-                  controller: _passwordController,
-                  label: 'Password',
-                  hint: 'At least 6 characters',
-                  obscureText: true,
-                  textInputAction: TextInputAction.done,
-                  validator: (v) {
-                    if ((v ?? '').length < 6) return 'Min 6 characters';
-                    return null;
-                  },
+                AutofillGroup(
+                  child: Column(
+                    children: [
+                      AppTextField(
+                        controller: _emailController,
+                        label: 'Email',
+                        hint: 'you@example.com',
+                        keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
+                        autofillHints: const [AutofillHints.email],
+                        validator: (v) {
+                          final t = v?.trim() ?? '';
+                          if (t.isEmpty) return 'Email is required';
+                          if (!t.contains('@') || !t.contains('.')) {
+                            return 'Enter a valid email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: AppSizes.md),
+                      AppTextField(
+                        controller: _passwordController,
+                        label: 'Password',
+                        hint: 'At least 6 characters',
+                        obscureText: true,
+                        textInputAction: TextInputAction.done,
+                        autofillHints: const [AutofillHints.password],
+                        enableSuggestions: false,
+                        validator: (v) {
+                          if ((v ?? '').length < 6) return 'Min 6 characters';
+                          return null;
+                        },
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: AppSizes.lg),
                 AppButton(

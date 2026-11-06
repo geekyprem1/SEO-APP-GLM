@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_sizes.dart';
 import '../services/ai/cloud_functions_ai_service.dart';
+import 'selected_tab_provider.dart';
 import '../../features/content_studio/screens/content_studio_screen.dart';
 import '../../features/home/screens/home_screen.dart';
 import '../../features/home/screens/video_home_screen.dart';
@@ -22,9 +23,6 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  // Default to the Short tab (the original dashboard).
-  int _index = 1;
-
   static const _tabs = [
     VideoHomeScreen(),
     HomeScreen(),
@@ -51,8 +49,14 @@ class _MainShellState extends ConsumerState<MainShell> {
 
   @override
   Widget build(BuildContext context) {
+    // The selected tab lives in [selectedTabProvider] so other screens
+    // (e.g. the home dashboard CTA) can switch to the Create tab.
+    // Defaults to Create — the AI Content Studio is the primary action
+    // ("Create my next video") per the growth findings (P0).
+    final index = ref.watch(selectedTabProvider);
+
     return Scaffold(
-      body: IndexedStack(index: _index, children: _tabs),
+      body: IndexedStack(index: index, children: _tabs),
       bottomNavigationBar: DecoratedBox(
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
@@ -72,8 +76,9 @@ class _MainShellState extends ConsumerState<MainShell> {
                       icon: _items[i].$1,
                       selectedIcon: _items[i].$2,
                       label: _items[i].$3,
-                      selected: _index == i,
-                      onTap: () => setState(() => _index = i),
+                      selected: index == i,
+                      onTap: () =>
+                          ref.read(selectedTabProvider.notifier).state = i,
                     ),
                   ),
               ],

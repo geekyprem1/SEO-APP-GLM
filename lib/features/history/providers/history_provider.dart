@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/config/app_constants.dart';
 import '../models/history_item.dart';
 import '../repository/history_repository.dart';
 
@@ -14,13 +15,31 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
 
   final HistoryRepository _repository;
 
-  /// Loads all history items from Hive.
+  /// How many items the current window requests from storage.
+  int _limit = AppConstants.defaultPageSize;
+
+  bool _hasMore = false;
+
+  /// True when storage may hold more items than are currently loaded.
+  bool get hasMore => _hasMore;
+
+  /// Loads the current page window from storage.
   void _load() {
-    state = AsyncValue.data(_repository.getAll());
+    final page = _repository.getPage(limit: _limit);
+    _hasMore = page.length >= _limit;
+    state = AsyncValue.data(page);
   }
 
-  /// Refreshes the list from storage.
+  /// Refreshes the list from the first page.
   void refresh() {
+    _limit = AppConstants.defaultPageSize;
+    _load();
+  }
+
+  /// Loads the next page of history.
+  void loadMore() {
+    if (!_hasMore) return;
+    _limit += AppConstants.defaultPageSize;
     _load();
   }
 
@@ -33,7 +52,7 @@ class HistoryNotifier extends StateNotifier<HistoryState> {
   /// Clears all history and refreshes the list.
   Future<void> clearAll() async {
     await _repository.clearAll();
-    _load();
+    refresh();
   }
 }
 

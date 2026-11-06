@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/services/analytics_service.dart';
-import '../../../core/services/clipboard_service.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/common/app_button.dart';
@@ -46,7 +45,7 @@ class _CompetitorRewriterScreenState
   }
 
   Future<void> _generate() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
@@ -68,10 +67,8 @@ class _CompetitorRewriterScreenState
     }
   }
 
-  void _copy(String text) {
-    ref.read(clipboardServiceProvider).copy(text);
-    UiUtils.showSuccessSnackBar(context, 'Title copied');
-  }
+  Future<void> _copy(String text) =>
+      UiUtils.copyToClipboard(context, text, successMessage: 'Title copied');
 
   @override
   Widget build(BuildContext context) {

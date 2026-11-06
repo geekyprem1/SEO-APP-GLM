@@ -9,23 +9,34 @@ abstract class CrashlyticsService {
 }
 
 /// Firebase Crashlytics implementation.
+///
+/// [isEnabled] is consulted on every call so revoking consent stops reporting
+/// immediately at the Dart layer too, not only via the SDK flag.
 class CrashlyticsServiceImpl implements CrashlyticsService {
-  CrashlyticsServiceImpl(this._crashlytics);
+  CrashlyticsServiceImpl(this._crashlytics, {bool Function()? isEnabled})
+      : _isEnabled = isEnabled ?? _alwaysEnabled;
 
   final FirebaseCrashlytics _crashlytics;
+  final bool Function() _isEnabled;
+
+  static bool _alwaysEnabled() => true;
 
   @override
   Future<void> recordError(Object error, StackTrace stack, {String? reason}) {
+    if (!_isEnabled()) return Future.value();
     return _crashlytics.recordError(error, stack, reason: reason);
   }
 
   @override
   Future<void> setUserId(String? uid) {
+    // Clearing the id on sign-out is allowed without consent; setting one is not.
+    if (!_isEnabled() && uid != null) return Future.value();
     return _crashlytics.setUserIdentifier(uid ?? '');
   }
 
   @override
   Future<void> log(String message) {
+    if (!_isEnabled()) return Future.value();
     return _crashlytics.log(message);
   }
 }

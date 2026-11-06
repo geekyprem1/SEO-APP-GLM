@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 
 class SeriesPromptBuilder {
@@ -12,6 +13,7 @@ class SeriesPromptBuilder {
     required String language,
     ContentFormat format = ContentFormat.shorts,
   }) {
+    final safeTopic = PromptUtils.clean(topic, field: 'topic');
     final platform =
         format.isShorts ? 'YouTube Shorts series' : 'YouTube long-form series';
     final count = format.isShorts ? 7 : 6;
@@ -19,12 +21,13 @@ class SeriesPromptBuilder {
     final prompt = '''
 You are a YouTube content strategist. Turn one topic into exactly $count connected episode ideas for a $platform, in $language.
 
-Topic: "$topic"
+Topic: "$safeTopic"
 
 Rules:
 - Ideas should form a coherent series (part 1 → part N feel).
 - Each idea: short title + one-line angle.
 - Mix beginner, advanced, myth-bust, checklist, story angles.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON.
 
 Return JSON:

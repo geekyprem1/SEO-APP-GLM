@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'core/router/app_router.dart';
 import 'core/services/analytics_service.dart';
+import 'core/services/crashlytics_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/consent_gate.dart';
 import 'features/auth/providers/auth_provider.dart';
@@ -17,10 +18,13 @@ class ShortSeoApp extends ConsumerWidget {
     final router = ref.watch(appRouterProvider);
     final themeMode = ref.watch(themeModeProvider);
 
-    // Sync analytics user id when auth changes.
+    // Sync analytics/crash user ids when auth changes. Sign-out clears the
+    // identifier from both SDKs so a previous user's activity is never
+    // attributed to the next session.
     ref.listen<AuthState>(authStateProvider, (previous, next) {
       next.whenData((user) {
         ref.read(analyticsServiceProvider).setUserId(user?.uid);
+        ref.read(crashlyticsServiceProvider).setUserId(user?.uid);
       });
     });
 

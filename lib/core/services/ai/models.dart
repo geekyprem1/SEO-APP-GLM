@@ -2,30 +2,30 @@ import 'package:flutter/foundation.dart';
 
 /// Identifies which feature is requesting AI generation.
 /// Used for quota tracking, logging, and analytics.
+///
+/// Daily limits are NOT mirrored here — the server owns them
+/// (`functions/src/utils.js` PLAN_LIMITS) so client copy can never drift.
 enum AiFeature {
-  title('title', 20),
-  hashtag('hashtag', 20),
-  description('description', 20),
-  content('content', 10),
-  viralIdeas('viralIdeas', 20),
-  trending('trending', 20),
-  seo('seo', 10),
-  thumbnail('thumbnail', 3),
-  contentStudio('contentStudio', 10),
-  hook('hook', 20),
-  captions('captions', 20),
-  chapters('chapters', 10),
-  cta('cta', 20),
-  competitor('competitor', 20),
-  series('series', 10);
+  title('title'),
+  hashtag('hashtag'),
+  description('description'),
+  content('content'),
+  viralIdeas('viralIdeas'),
+  trending('trending'),
+  seo('seo'),
+  thumbnail('thumbnail'),
+  contentStudio('contentStudio'),
+  hook('hook'),
+  captions('captions'),
+  chapters('chapters'),
+  cta('cta'),
+  competitor('competitor'),
+  series('series');
 
-  const AiFeature(this.id, this.dailyLimit);
+  const AiFeature(this.id);
 
   /// Stable identifier stored in Firestore usage docs and logs.
   final String id;
-
-  /// Per-user daily generation limit for this feature.
-  final int dailyLimit;
 }
 
 /// A request to the AI service.

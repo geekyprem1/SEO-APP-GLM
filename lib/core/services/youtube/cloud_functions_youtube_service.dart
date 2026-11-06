@@ -29,9 +29,17 @@ class CloudFunctionsYouTubeService implements YouTubeService {
         'videoUrlOrId': videoUrlOrId,
       });
 
-      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
+      final data = _responseMap(response.data);
       _checkError(data);
-      return _parseVideo(data['video'] as Map<String, dynamic>);
+      final video = _mapOrNull(data['video']);
+      if (video == null) {
+        throw ApiException('Video not found.', statusCode: 404);
+      }
+      final parsed = _parseVideo(video);
+      if (parsed.videoId.isEmpty) {
+        throw ApiException('Video not found.', statusCode: 404);
+      }
+      return parsed;
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -46,9 +54,17 @@ class CloudFunctionsYouTubeService implements YouTubeService {
         'channelId': channelId,
       });
 
-      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
+      final data = _responseMap(response.data);
       _checkError(data);
-      return _parseChannel(data['channel'] as Map<String, dynamic>);
+      final channel = _mapOrNull(data['channel']);
+      if (channel == null) {
+        throw ApiException('Channel not found.', statusCode: 404);
+      }
+      final parsed = _parseChannel(channel);
+      if (parsed.channelId.isEmpty) {
+        throw ApiException('Channel not found.', statusCode: 404);
+      }
+      return parsed;
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
@@ -67,16 +83,31 @@ class CloudFunctionsYouTubeService implements YouTubeService {
         'maxResults': maxResults,
       });
 
-      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
+      final data = _responseMap(response.data);
       _checkError(data);
       final items = data['results'] as List<dynamic>? ?? [];
       return items
-          .map((e) => _parseSearchResult(e as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((e) => _parseSearchResult(Map<String, dynamic>.from(e)))
+          .where((r) => r.videoId.isNotEmpty)
           .toList();
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
     }
   }
+
+  /// Normalizes a callable response payload to a JSON map, rejecting
+  /// null / non-map shapes instead of crashing with a cast error.
+  Map<String, dynamic> _responseMap(dynamic payload) {
+    final decoded = jsonDecode(jsonEncode(payload));
+    if (decoded is! Map) {
+      throw ApiException('Unexpected server response.');
+    }
+    return Map<String, dynamic>.from(decoded);
+  }
+
+  Map<String, dynamic>? _mapOrNull(dynamic value) =>
+      value is Map ? Map<String, dynamic>.from(value) : null;
 
   void _checkError(Map<String, dynamic> data) {
     final error = data['error'] as String?;
@@ -88,17 +119,17 @@ class CloudFunctionsYouTubeService implements YouTubeService {
 
   YouTubeVideo _parseVideo(Map<String, dynamic> json) {
     return YouTubeVideo(
-      videoId: json['videoId'] as String,
+      videoId: json['videoId'] as String? ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       channelId: json['channelId'] as String?,
       channelTitle: json['channelTitle'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
       tags: JsonUtils.stringList(json['tags']),
-      viewCount: json['viewCount'] as int?,
-      likeCount: json['likeCount'] as int?,
-      commentCount: json['commentCount'] as int?,
-      publishedAt: json['publishedAt'] != null
+      viewCount: (json['viewCount'] as num?)?.toInt(),
+      likeCount: (json['likeCount'] as num?)?.toInt(),
+      commentCount: (json['commentCount'] as num?)?.toInt(),
+      publishedAt: json['publishedAt'] is String
           ? DateTime.tryParse(json['publishedAt'] as String)
           : null,
     );
@@ -106,23 +137,23 @@ class CloudFunctionsYouTubeService implements YouTubeService {
 
   YouTubeChannel _parseChannel(Map<String, dynamic> json) {
     return YouTubeChannel(
-      channelId: json['channelId'] as String,
+      channelId: json['channelId'] as String? ?? '',
       title: json['title'] as String? ?? '',
       description: json['description'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
-      subscriberCount: json['subscriberCount'] as int?,
-      videoCount: json['videoCount'] as int?,
-      viewCount: json['viewCount'] as int?,
+      subscriberCount: (json['subscriberCount'] as num?)?.toInt(),
+      videoCount: (json['videoCount'] as num?)?.toInt(),
+      viewCount: (json['viewCount'] as num?)?.toInt(),
     );
   }
 
   YouTubeSearchResult _parseSearchResult(Map<String, dynamic> json) {
     return YouTubeSearchResult(
-      videoId: json['videoId'] as String,
+      videoId: json['videoId'] as String? ?? '',
       title: json['title'] as String? ?? '',
       channelTitle: json['channelTitle'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
-      publishedAt: json['publishedAt'] != null
+      publishedAt: json['publishedAt'] is String
           ? DateTime.tryParse(json['publishedAt'] as String)
           : null,
     );

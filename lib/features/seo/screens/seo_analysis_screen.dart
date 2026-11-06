@@ -37,7 +37,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
   }
 
   Future<void> _analyze() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'seo_analyze_tapped');
@@ -111,7 +111,7 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
   }
 
   Widget _buildResult(AsyncValue<SeoAnalysis> state) {
-    final word = ref.read(selectedFormatProvider).isShorts ? 'Shorts' : 'Video';
+    final word = ref.watch(selectedFormatProvider).isShorts ? 'Shorts' : 'Video';
     if (!_hasGenerated) {
       return _EmptyState(
         icon: Icons.analytics_rounded,
@@ -172,11 +172,14 @@ class _SeoAnalysisScreenState extends ConsumerState<SeoAnalysisScreen> {
         AppCard(
           child: Column(
             children: [
-              if (analysis.thumbnailUrl != null)
+              if (analysis.thumbnailUrl != null &&
+                  analysis.thumbnailUrl!.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppSizes.radiusMd),
                   child: CachedNetworkImage(
                     imageUrl: analysis.thumbnailUrl!,
+                    cacheKey: analysis.thumbnailUrl,
+                    memCacheWidth: 800,
                     height: 160,
                     width: double.infinity,
                     fit: BoxFit.cover,
@@ -318,7 +321,7 @@ class _ScoreGauge extends StatelessWidget {
             width: 120,
             height: 120,
             child: CircularProgressIndicator(
-              value: score / 100,
+              value: score.clamp(0, 100) / 100,
               strokeWidth: 8,
               backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               valueColor: AlwaysStoppedAnimation<Color>(color),

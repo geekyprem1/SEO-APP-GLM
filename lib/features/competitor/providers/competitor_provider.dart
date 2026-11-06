@@ -28,6 +28,8 @@ class CompetitorNotifier extends StateNotifier<CompetitorState> {
       _last = result;
       state = AsyncValue.data(result);
     } catch (e, st) {
+      // Don't keep a stale result after a failure.
+      _last = null;
       state = AsyncValue.error(e, st);
     }
   }

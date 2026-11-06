@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'app.dart';
@@ -28,6 +29,10 @@ import 'features/settings/providers/settings_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Inter ships inside the app (see pubspec `fonts:`) — never fetch fonts over
+  // the network at runtime.
+  GoogleFonts.config.allowRuntimeFetching = false;
+
   // Initialize Hive local storage.
   await Hive.initFlutter();
   Hive.registerAdapter(HistoryTypeAdapter());
@@ -36,20 +41,16 @@ void main() async {
   // Encrypt every box at rest with an AES key held in the platform secure
   // store. migrateIfNeeded() converts any pre-existing plaintext boxes from
   // older builds before we open them encrypted, so no user data is lost.
+  // openEncrypted() recreates a box if it can no longer be decrypted, so a
+  // corrupt key/file never bricks startup.
   final hiveEnc = HiveEncryption.instance;
   await hiveEnc.migrateIfNeeded(
     const [AppConstants.historyBox, AppConstants.settingsBox],
   );
-  final cipher = await hiveEnc.cipher();
 
-  final historyBox = await Hive.openBox<HistoryItem>(
-    AppConstants.historyBox,
-    encryptionCipher: cipher,
-  );
-  final settingsBox = await Hive.openBox(
-    AppConstants.settingsBox,
-    encryptionCipher: cipher,
-  );
+  final historyBox =
+      await hiveEnc.openEncrypted<HistoryItem>(AppConstants.historyBox);
+  final settingsBox = await hiveEnc.openEncrypted(AppConstants.settingsBox);
 
   // Read the stored analytics/crash-reporting consent (null = not asked yet)
   // so Firebase starts with collection in the user's chosen state.
@@ -61,6 +62,10 @@ void main() async {
   try {
     overrides = await FirebaseService.initialize(
       analyticsConsent: analyticsConsent,
+      // Live consent check: the Dart-layer guard must follow the user's toggle,
+      // not the value captured at startup.
+      isCollectionEnabled: () =>
+          settingsBox.get(PrivacyConsentNotifier.storageKey) == true,
     );
   } catch (e) {
     // debugPrint still writes to logcat in release; guard it so init details

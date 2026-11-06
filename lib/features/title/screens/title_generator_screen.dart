@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_sizes.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/services/analytics_service.dart';
-import '../../../core/services/clipboard_service.dart';
 import '../../../core/utils/ui_utils.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/common/app_button.dart';
@@ -48,7 +47,7 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
   }
 
   Future<void> _generate() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
     // Prevent duplicate requests.
     if (_isSubmitting) return;
@@ -72,10 +71,8 @@ class _TitleGeneratorScreenState extends ConsumerState<TitleGeneratorScreen> {
     }
   }
 
-  void _copySingle(String title) {
-    ref.read(clipboardServiceProvider).copy(title);
-    UiUtils.showSuccessSnackBar(context, 'Title copied');
-  }
+  Future<void> _copySingle(String title) =>
+      UiUtils.copyToClipboard(context, title, successMessage: 'Title copied');
 
   @override
   Widget build(BuildContext context) {

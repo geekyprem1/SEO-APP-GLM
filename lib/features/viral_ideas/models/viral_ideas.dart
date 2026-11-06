@@ -45,11 +45,13 @@ class ViralIdeas {
 
   factory ViralIdeas.fromJson(Map<String, dynamic> json) {
     return ViralIdeas(
-      id: json['id'] as String,
-      category: json['category'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       ideas: JsonUtils.stringList(json['ideas']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

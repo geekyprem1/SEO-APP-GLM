@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 
 class CompetitorPromptBuilder {
@@ -11,6 +12,8 @@ class CompetitorPromptBuilder {
     required String language,
     ContentFormat format = ContentFormat.shorts,
   }) {
+    final safeSourceTitle =
+        PromptUtils.clean(sourceTitle, field: 'sourceTitle');
     final platform =
         format.isShorts ? 'YouTube Shorts' : 'YouTube long-form video';
     final limit = format.isShorts ? 70 : 100;
@@ -19,7 +22,7 @@ class CompetitorPromptBuilder {
 You are a YouTube SEO strategist. Rewrite this competitor title into exactly 10 stronger alternatives for a $platform, in $language.
 
 Competitor title:
-"""$sourceTitle"""
+"""$safeSourceTitle"""
 
 Rules:
 - Keep the same core topic/intent.
@@ -27,6 +30,7 @@ Rules:
 - Each title under $limit characters.
 - Do NOT copy the original wording closely.
 - Avoid misleading clickbait.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON.
 
 Return JSON:

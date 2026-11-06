@@ -44,6 +44,9 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
   late ContentDuration _duration = DurationCatalog.defaultFor(_format);
   bool _hasGenerated = false;
   bool _isSubmitting = false;
+  // Advanced options stay collapsed on first use — the growth findings (P0)
+  // say a creator should reach a useful result with just topic + language.
+  bool _showAdvanced = false;
 
   @override
   void dispose() {
@@ -61,7 +64,7 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
   }
 
   Future<void> _generate() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     // Prevent a second request while one is pending (Req 4.1).
     if (_isSubmitting) return;
 
@@ -116,7 +119,7 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
                           style: theme.textTheme.titleMedium),
                       const SizedBox(height: AppSizes.xs),
                       Text(
-                        'Titles, hook, script, description, keywords, hashtags, thumbnail text & CTA — all at once.',
+                        'Enter a topic — get titles, hook, script, description, keywords, hashtags, thumbnail text & CTA in one go.',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
@@ -144,34 +147,55 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
                             setState(() => _topicController.text = s),
                       ),
                       const SizedBox(height: AppSizes.md),
-                      AppDropdown<ContentFormat>(
-                        value: _format,
-                        items: ContentFormat.values,
-                        label: 'Format',
-                        itemLabel: (f) => f.description,
-                        onChanged: _onFormatChanged,
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => setState(
+                              () => _showAdvanced = !_showAdvanced),
+                          icon: Icon(
+                            _showAdvanced
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.tune_rounded,
+                            size: AppSizes.iconSm,
+                          ),
+                          label: Text(
+                            _showAdvanced
+                                ? 'Hide format, duration & tone'
+                                : 'More options: format, duration & tone',
+                          ),
+                        ),
                       ),
-                      const SizedBox(height: AppSizes.md),
-                      AppDropdown<ContentDuration>(
-                        value: _duration,
-                        items: durationOptions,
-                        label: 'Duration',
-                        itemLabel: (d) => d.label,
-                        onChanged: (v) {
-                          if (v != null) setState(() => _duration = v);
-                        },
-                      ),
-                      const SizedBox(height: AppSizes.md),
-                      AppDropdown<Tone>(
-                        value: _tone,
-                        items: ToneCatalog.all,
-                        label: 'Tone',
-                        itemLabel: (t) => t.label,
-                        onChanged: (v) {
-                          if (v != null) setState(() => _tone = v);
-                        },
-                      ),
-                      const SizedBox(height: AppSizes.md),
+                      if (_showAdvanced) ...[
+                        const SizedBox(height: AppSizes.sm),
+                        AppDropdown<ContentFormat>(
+                          value: _format,
+                          items: ContentFormat.values,
+                          label: 'Format',
+                          itemLabel: (f) => f.description,
+                          onChanged: _onFormatChanged,
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                        AppDropdown<ContentDuration>(
+                          value: _duration,
+                          items: durationOptions,
+                          label: 'Duration',
+                          itemLabel: (d) => d.label,
+                          onChanged: (v) {
+                            if (v != null) setState(() => _duration = v);
+                          },
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                        AppDropdown<Tone>(
+                          value: _tone,
+                          items: ToneCatalog.all,
+                          label: 'Tone',
+                          itemLabel: (t) => t.label,
+                          onChanged: (v) {
+                            if (v != null) setState(() => _tone = v);
+                          },
+                        ),
+                        const SizedBox(height: AppSizes.md),
+                      ],
                       AppDropdown<Language>(
                         value: _language,
                         items: LanguageCatalog.all,
@@ -207,7 +231,7 @@ class _ContentStudioScreenState extends ConsumerState<ContentStudioScreen> {
         icon: Icons.auto_awesome_motion_rounded,
         title: 'No package yet',
         subtitle:
-            'Enter a topic, pick your format, tone and duration, then tap Generate to create a complete content package.',
+            'Just enter a topic, pick your language and tap Generate. Format, duration and tone can be tuned anytime.',
       );
     }
 

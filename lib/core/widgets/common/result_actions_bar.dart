@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/services/clipboard_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/services/share_service.dart';
 import '../../../core/utils/ui_utils.dart';
@@ -26,27 +25,39 @@ class ResultActionsBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Nothing usable to copy/share (e.g. every field cleared in the editor) —
+    // disable the actions instead of copying an empty string.
+    final hasText = text.trim().isNotEmpty;
+
     return Row(
       children: [
         _ActionButton(
           icon: Icons.copy_rounded,
           label: 'Copy',
-          onTap: () async {
-            await ref.read(clipboardServiceProvider).copy(text);
-            ref.read(hapticServiceProvider).light();
-            if (context.mounted) {
-              UiUtils.showSuccessSnackBar(context, 'Copied to clipboard');
-            }
-          },
+          onTap: hasText
+              ? () async {
+                  await UiUtils.copyToClipboard(
+                    context,
+                    text,
+                    successMessage: 'Copied to clipboard',
+                  );
+                  ref.read(hapticServiceProvider).light();
+                }
+              : null,
         ),
         const SizedBox(width: AppSizes.sm),
         _ActionButton(
           icon: Icons.share_rounded,
           label: 'Share',
-          onTap: () async {
-            await ref.read(shareServiceProvider).share(text);
-            ref.read(hapticServiceProvider).light();
-          },
+          onTap: hasText
+              ? () async {
+                  await ref.read(shareServiceProvider).share(
+                        text,
+                        origin: UiUtils.shareOrigin(context),
+                      );
+                  ref.read(hapticServiceProvider).light();
+                }
+              : null,
         ),
         if (onSave != null) ...[
           const SizedBox(width: AppSizes.sm),
@@ -80,7 +91,9 @@ class _ActionButton extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final Future<void> Function() onTap;
+
+  /// Null disables the button (e.g. no text to act on).
+  final Future<void> Function()? onTap;
 
   @override
   Widget build(BuildContext context) {

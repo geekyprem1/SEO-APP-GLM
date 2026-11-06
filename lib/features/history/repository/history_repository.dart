@@ -10,6 +10,13 @@ abstract class HistoryRepository {
   /// Returns all history items sorted by createdAt descending.
   List<HistoryItem> getAll();
 
+  /// Returns a page of history items sorted by createdAt descending.
+  /// Loading the whole box on every read does not scale with history size.
+  List<HistoryItem> getPage({
+    int offset = 0,
+    int limit = AppConstants.defaultPageSize,
+  });
+
   /// Returns a single item by id, or null.
   HistoryItem? getById(String id);
 
@@ -35,6 +42,16 @@ class HistoryRepositoryImpl implements HistoryRepository {
     final items = _box.values.toList();
     items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     return items;
+  }
+
+  @override
+  List<HistoryItem> getPage({
+    int offset = 0,
+    int limit = AppConstants.defaultPageSize,
+  }) {
+    final items = getAll();
+    if (offset >= items.length) return const [];
+    return items.sublist(offset, (offset + limit).clamp(0, items.length));
   }
 
   @override

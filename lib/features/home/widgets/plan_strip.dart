@@ -13,13 +13,16 @@ class PlanStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final plan = ref.watch(userPlanProvider).valueOrNull ?? UserPlan.free;
-    final isPro = plan.isPro;
+    // Never guess "Free" while the plan is loading or failed to load — a paying
+    // Pro user must not be shown an upgrade prompt because of a read error.
+    final plan = ref.watch(userPlanProvider).valueOrNull;
+    final isKnownPlan = plan != null;
+    final isPro = plan?.isPro ?? false;
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: isPro
+        onTap: (isPro || !isKnownPlan)
             ? null
             : () => showProUpgradeDialog(
                   context,
@@ -52,7 +55,7 @@ class PlanStrip extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(AppSizes.radiusLg),
                 ),
                 child: Text(
-                  isPro ? 'Pro' : 'Free',
+                  isPro ? 'Pro' : (isKnownPlan ? 'Free' : '…'),
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -63,9 +66,11 @@ class PlanStrip extends ConsumerWidget {
               const SizedBox(width: AppSizes.sm),
               Expanded(
                 child: Text(
-                  isPro
-                      ? 'Full access · higher daily limits'
-                      : 'Free plan · resets daily',
+                  !isKnownPlan
+                      ? 'Checking your plan…'
+                      : isPro
+                          ? 'Full access · higher daily limits'
+                          : 'Free plan · resets daily',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
@@ -73,7 +78,7 @@ class PlanStrip extends ConsumerWidget {
                   ),
                 ),
               ),
-              if (!isPro) ...[
+              if (isKnownPlan && !isPro) ...[
                 const SizedBox(width: AppSizes.xs),
                 Container(
                   padding: const EdgeInsets.symmetric(

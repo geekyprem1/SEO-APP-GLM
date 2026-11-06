@@ -10,7 +10,7 @@
  */
 
 const { onCall, HttpsError } = require('firebase-functions/v2/https');
-const { admin, db } = require('./utils');
+const { admin, db, checkRateLimit } = require('./utils');
 
 const ROLES = ['super_admin', 'admin', 'moderator', 'support'];
 
@@ -18,19 +18,40 @@ const ROLES = ['super_admin', 'admin', 'moderator', 'support'];
  * deleteMyAccount — a signed-in user permanently deletes their own account.
  * Removes the Firestore user doc (+ subcollections) and the Auth user. (GDPR)
  */
-exports.deleteMyAccount = onCall({ timeoutSeconds: 60, memory: '256MiB' }, async (request) => {
-  const uid = request.auth?.uid;
-  if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+exports.deleteMyAccount = onCall(
+  { timeoutSeconds: 60, memory: '256MiB', enforceAppCheck: true },
+  async (request) => {
+    const uid = request.auth?.uid;
+    if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
 
-  // Recursively delete users/{uid} and all subcollections (usage, notes, ...).
-  await db.recursiveDelete(db.collection('users').doc(uid));
-  // Delete the auth account last.
-  await admin.auth().deleteUser(uid).catch(() => {});
+    // Abuse guard: deletion is expensive and irreversible.
+    await checkRateLimit(uid, 'deleteAccount');
 
-  return { ok: true };
-});
+    // Recursively delete users/{uid} and all subcollections (usage, notes, ...).
+    await db.recursiveDelete(db.collection('users').doc(uid));
 
-exports.setAdminRole = onCall({ timeoutSeconds: 30, memory: '256MiB' }, async (request) => {
+    // Delete the Auth account last. A failure here must NOT be reported as
+    // success — the sign-in credentials would still exist.
+    try {
+      await admin.auth().deleteUser(uid);
+    } catch (err) {
+      if (err.code !== 'auth/user-not-found') {
+        console.error('deleteMyAccount: auth delete failed', {
+          uid,
+          error: err.message,
+        });
+        throw new HttpsError(
+          'internal',
+          'Account deletion failed. Please try again.'
+        );
+      }
+    }
+
+    return { ok: true };
+  }
+);
+
+exports.setAdminRole = onCall({ timeoutSeconds: 30, memory: '256MiB', enforceAppCheck: true }, async (request) => {
   const caller = request.auth;
   if (!caller) throw new HttpsError('unauthenticated', 'Sign in required.');
 
@@ -38,6 +59,9 @@ exports.setAdminRole = onCall({ timeoutSeconds: 30, memory: '256MiB' }, async (r
   if (caller.token.admin !== true || caller.token.role !== 'super_admin') {
     throw new HttpsError('permission-denied', 'Super admin only.');
   }
+
+  // Abuse guard on a privilege-granting endpoint.
+  await checkRateLimit(caller.uid, 'admin');
 
   const { targetUid, role, revoke } = request.data || {};
   if (!targetUid) throw new HttpsError('invalid-argument', 'targetUid required.');
@@ -55,7 +79,16 @@ exports.setAdminRole = onCall({ timeoutSeconds: 30, memory: '256MiB' }, async (r
   const before = beforeSnap.exists ? beforeSnap.data() : null;
 
   if (revoke) {
-    await admin.auth().setCustomUserClaims(targetUid, null);
+    // Remove ONLY the admin claims — never wipe unrelated custom claims that
+    // other parts of the system may rely on.
+    const claims = { ...(user.customClaims || {}) };
+    delete claims.admin;
+    delete claims.role;
+    delete claims.v;
+    await admin.auth().setCustomUserClaims(
+      targetUid,
+      Object.keys(claims).length > 0 ? claims : null
+    );
     await db.collection('admins').doc(targetUid).delete();
   } else {
     const v = (before?.v ?? 0) + 1;

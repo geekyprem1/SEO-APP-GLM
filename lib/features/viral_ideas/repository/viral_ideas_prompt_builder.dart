@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the Viral Ideas feature.
@@ -12,15 +13,17 @@ class ViralIdeasPromptBuilder {
     required String language,
     ContentFormat format = ContentFormat.shorts,
   }) {
+    final safeCategory = PromptUtils.clean(category, field: 'category');
     final platform = format.isShorts ? 'YouTube Shorts' : 'YouTube long-form video';
     final prompt = '''
-You are a YouTube content strategist. Generate exactly 20 viral $platform content ideas for the "$category" niche in $language.
+You are a YouTube content strategist. Generate exactly 20 viral $platform content ideas for the "$safeCategory" niche in $language.
 
 Rules:
 - Each idea should be a specific, actionable video concept (not just a topic).
 - Include a mix of trending formats: challenges, listicles, tutorials, reactions, storytelling.
 - Keep each idea under 80 characters.
 - Make them highly shareable and engaging.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON, no markdown or extra text.
 
 Return JSON in this exact format:

@@ -44,11 +44,13 @@ class GeneratedCompetitorTitles {
 
   factory GeneratedCompetitorTitles.fromJson(Map<String, dynamic> json) {
     return GeneratedCompetitorTitles(
-      id: json['id'] as String,
-      sourceTitle: json['sourceTitle'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      sourceTitle: json['sourceTitle'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       titles: JsonUtils.stringList(json['titles']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

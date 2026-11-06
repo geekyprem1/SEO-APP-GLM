@@ -50,12 +50,14 @@ class TrendingTopics {
 
   factory TrendingTopics.fromJson(Map<String, dynamic> json) {
     return TrendingTopics(
-      id: json['id'] as String,
-      category: json['category'] as String,
-      country: json['country'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      country: json['country'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       topics: JsonUtils.stringList(json['topics']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

@@ -6,6 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
+import '../../../core/navigation/selected_tab_provider.dart';
+import '../../../core/services/analytics_service.dart';
+import '../../../core/widgets/common/app_button.dart';
 import '../../../shared/models/content_format.dart';
 import '../models/feature_catalog.dart';
 import '../models/feature_item.dart';
@@ -51,6 +54,16 @@ class _FeatureDashboardState extends ConsumerState<FeatureDashboard> {
   void _open(FeatureItem item) {
     ref.read(selectedFormatProvider.notifier).state = widget.format;
     context.push(item.route);
+  }
+
+  /// Primary home action per the growth findings (P0): one tap takes the
+  /// creator from the dashboard straight into the AI Content Studio.
+  void _createNextVideo() {
+    ref.read(analyticsServiceProvider).logEvent(
+      name: 'create_next_video_tapped',
+      parameters: {'source': widget.format.name},
+    );
+    ref.read(selectedTabProvider.notifier).state = AppTabIndex.create;
   }
 
   @override
@@ -102,6 +115,15 @@ class _FeatureDashboardState extends ConsumerState<FeatureDashboard> {
                   color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ).animate().fadeIn(delay: 80.ms, duration: 300.ms),
+              const SizedBox(height: AppSizes.md),
+              AppButton(
+                label: 'Create my next video',
+                icon: Icons.auto_awesome_rounded,
+                onPressed: _createNextVideo,
+              ).animate().fadeIn(delay: 100.ms, duration: 300.ms).slideY(
+                    begin: 0.08,
+                    end: 0,
+                  ),
               const SizedBox(height: AppSizes.md),
               const PlanStrip()
                   .animate()

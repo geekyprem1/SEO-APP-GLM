@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../constants/app_colors.dart';
 import '../../constants/app_sizes.dart';
 
 /// Shimmer skeleton placeholder for loading states.
@@ -19,19 +18,24 @@ class ShimmerLoading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const baseColor = AppColors.primarySoft;
-    const highlightColor = AppColors.heroWash;
+    final scheme = Theme.of(context).colorScheme;
+    // Theme-aware so the skeleton reads correctly in dark mode (the previous
+    // hardcoded light-only colors washed out on dark surfaces).
+    final baseColor = scheme.surfaceContainerHighest;
+    final highlightColor = scheme.surfaceContainerHigh;
 
-    return Shimmer.fromColors(
-      baseColor: baseColor,
-      highlightColor: highlightColor,
-      period: const Duration(milliseconds: 1400),
-      child: Container(
-        height: height,
-        width: width,
-        decoration: BoxDecoration(
-          color: baseColor,
-          borderRadius: BorderRadius.circular(borderRadius),
+    return RepaintBoundary(
+      child: Shimmer.fromColors(
+        baseColor: baseColor,
+        highlightColor: highlightColor,
+        period: const Duration(milliseconds: 1400),
+        child: Container(
+          height: height,
+          width: width,
+          decoration: BoxDecoration(
+            color: baseColor,
+            borderRadius: BorderRadius.circular(borderRadius),
+          ),
         ),
       ),
     );
@@ -47,16 +51,20 @@ class ShimmerList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: itemCount,
+    // Fixed-count Column rather than a nested shrinkWrap ListView: every row is
+    // built anyway, and this skips the nested-scroll layout cost each frame.
+    return Padding(
       padding: const EdgeInsets.all(AppSizes.paddingMd),
-      itemBuilder: (context, index) => Padding(
-        padding: const EdgeInsets.only(bottom: AppSizes.sm),
-        child: ShimmerLoading(
-          height: itemHeight,
-          borderRadius: AppSizes.radiusMd,
+      child: Column(
+        children: List.generate(
+          itemCount,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.sm),
+            child: ShimmerLoading(
+              height: itemHeight,
+              borderRadius: AppSizes.radiusMd,
+            ),
+          ),
         ),
       ),
     );

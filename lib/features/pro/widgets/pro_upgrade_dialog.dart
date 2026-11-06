@@ -34,8 +34,9 @@ class ProUpgradeDialog extends StatelessWidget {
 
   final ProUpgradeReason reason;
 
+  // Soft copy only — exact quotas live on the server and are not mirrored here.
   static const _benefits = [
-    '50 generations per feature daily',
+    'Higher daily limits per feature',
     'All AI features unlocked',
     'Video + Shorts modes',
     'Priority generation',

@@ -43,11 +43,13 @@ class Validators {
   }
 
   /// Extracts the 11-char video ID from a YouTube URL, or null.
+  /// Matching is case-insensitive on the URL parts while preserving the ID's
+  /// own case (video IDs are case-sensitive).
   static String? extractVideoId(String url) {
     final patterns = [
-      RegExp(r'youtube\.com/shorts/([\w-]{11})'),
-      RegExp(r'youtu\.be/([\w-]{11})'),
-      RegExp(r'[?&]v=([\w-]{11})'),
+      RegExp(r'youtube\.com/shorts/([\w-]{11})', caseSensitive: false),
+      RegExp(r'youtu\.be/([\w-]{11})', caseSensitive: false),
+      RegExp(r'[?&]v=([\w-]{11})', caseSensitive: false),
     ];
     for (final p in patterns) {
       final match = p.firstMatch(url);

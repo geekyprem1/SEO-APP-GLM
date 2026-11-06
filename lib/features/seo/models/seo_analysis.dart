@@ -59,10 +59,10 @@ class SeoAnalysis {
       channelTitle: metadata['channelTitle'] as String?,
       thumbnailUrl: metadata['thumbnailUrl'] as String?,
       tags: JsonUtils.stringList(metadata['tags']),
-      viewCount: metadata['viewCount'] as int?,
-      likeCount: metadata['likeCount'] as int?,
-      commentCount: metadata['commentCount'] as int?,
-      score: (analysis['score'] as num?)?.toInt() ?? 0,
+      viewCount: (metadata['viewCount'] as num?)?.toInt(),
+      likeCount: (metadata['likeCount'] as num?)?.toInt(),
+      commentCount: (metadata['commentCount'] as num?)?.toInt(),
+      score: ((analysis['score'] as num?)?.toInt() ?? 0).clamp(0, 100),
       suggestions: JsonUtils.stringList(analysis['suggestions']),
       createdAt: createdAt,
     );
@@ -87,20 +87,22 @@ class SeoAnalysis {
 
   factory SeoAnalysis.fromJson(Map<String, dynamic> json) {
     return SeoAnalysis(
-      id: json['id'] as String,
-      videoUrl: json['videoUrl'] as String,
-      videoId: json['videoId'] as String,
+      id: json['id'] as String? ?? '',
+      videoUrl: json['videoUrl'] as String? ?? '',
+      videoId: json['videoId'] as String? ?? '',
       title: json['title'] as String?,
       description: json['description'] as String?,
       channelTitle: json['channelTitle'] as String?,
       thumbnailUrl: json['thumbnailUrl'] as String?,
       tags: JsonUtils.stringList(json['tags']),
-      viewCount: json['viewCount'] as int?,
-      likeCount: json['likeCount'] as int?,
-      commentCount: json['commentCount'] as int?,
-      score: json['score'] as int? ?? 0,
+      viewCount: (json['viewCount'] as num?)?.toInt(),
+      likeCount: (json['likeCount'] as num?)?.toInt(),
+      commentCount: (json['commentCount'] as num?)?.toInt(),
+      score: ((json['score'] as num?)?.toInt() ?? 0).clamp(0, 100),
       suggestions: JsonUtils.stringList(json['suggestions']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

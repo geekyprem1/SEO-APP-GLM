@@ -62,18 +62,52 @@ class UiUtils {
   /// Light haptic feedback.
   static void lightHaptic() => HapticFeedback.lightImpact();
 
+  /// The share-popover anchor rect for the nearest render box.
+  /// Required on iPad (UIKit needs a source rect) and ignored elsewhere.
+  static Rect? shareOrigin(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
+
+  /// Shows a snackbar with an Undo action.
+  static void showUndoSnackBar(
+    BuildContext context,
+    String message, {
+    required VoidCallback onUndo,
+  }) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(message),
+          behavior: SnackBarBehavior.floating,
+          action: SnackBarAction(label: 'Undo', onPressed: onUndo),
+        ),
+      );
+  }
+
   /// Medium haptic feedback.
   static void mediumHaptic() => HapticFeedback.mediumImpact();
 
-  /// Copy to clipboard with optional snackbar confirmation.
+  /// Copy to clipboard with confirmation/error snackbars; never throws and
+  /// never reports a copy that did not actually happen.
   static Future<void> copyToClipboard(
     BuildContext context,
     String text, {
     String? successMessage,
   }) async {
-    await Clipboard.setData(ClipboardData(text: text));
-    if (context.mounted) {
-      showSuccessSnackBar(context, successMessage ?? 'Copied to clipboard');
+    if (text.trim().isEmpty) return;
+    try {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (context.mounted) {
+        showSuccessSnackBar(context, successMessage ?? 'Copied to clipboard');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        showErrorSnackBar(context, 'Could not copy. Please try again.');
+      }
     }
   }
 }

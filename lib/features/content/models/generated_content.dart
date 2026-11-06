@@ -46,12 +46,14 @@ class GeneratedContent {
 
   factory GeneratedContent.fromJson(Map<String, dynamic> json) {
     return GeneratedContent(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      hook: json['hook'] as String,
-      mainContent: json['mainContent'] as String,
-      cta: json['cta'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      hook: json['hook'] as String? ?? '',
+      mainContent: json['mainContent'] as String? ?? '',
+      cta: json['cta'] as String? ?? '',
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

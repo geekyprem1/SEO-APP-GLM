@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the Title Generator feature.
@@ -17,10 +18,11 @@ class TitlePromptBuilder {
     required String language,
     ContentFormat format = ContentFormat.shorts,
   }) {
+    final safeTopic = PromptUtils.clean(topic, field: 'topic');
     final platform = format.isShorts ? 'YouTube Shorts video' : 'YouTube long-form video';
     final limit = format.isShorts ? 70 : 100;
     final prompt = '''
-You are a YouTube SEO expert. Generate exactly 10 SEO-friendly, high-CTR titles for a $platform about "$topic" in $language.
+You are a YouTube SEO expert. Generate exactly 10 SEO-friendly, high-CTR titles for a $platform about "$safeTopic" in $language.
 
 Rules:
 - Each title must be under $limit characters.
@@ -28,6 +30,7 @@ Rules:
 - Include relevant keywords naturally.
 - Avoid clickbait that misleads.
 - Vary the style: questions, lists, bold claims, how-tos.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON, no markdown or extra text.
 
 Return JSON in this exact format:

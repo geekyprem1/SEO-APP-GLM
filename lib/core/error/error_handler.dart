@@ -181,10 +181,13 @@ class ErrorHandler {
       case DioExceptionType.cancel:
         return const CancelledFailure();
       case DioExceptionType.unknown:
-        if (error.error != null) {
-          if (error.error.toString().contains('Socket')) {
-            return const NetworkFailure();
-          }
+        // Case-insensitive match on the cause: dart:io's SocketException and
+        // platform wrappers all contain "socket" / "host lookup" text.
+        final cause = error.error?.toString().toLowerCase() ?? '';
+        if (cause.contains('socket') ||
+            cause.contains('failed host lookup') ||
+            cause.contains('network is unreachable')) {
+          return const NetworkFailure();
         }
         return UnknownFailure(message: error.message ?? 'Unknown error.');
       case DioExceptionType.badCertificate:

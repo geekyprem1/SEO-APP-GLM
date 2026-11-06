@@ -61,12 +61,14 @@ class GeneratedThumbnail {
 
   factory GeneratedThumbnail.fromJson(Map<String, dynamic> json) {
     return GeneratedThumbnail(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      category: json['category'] as String,
-      style: json['style'] as String,
-      imageUrl: json['imageUrl'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      category: json['category'] as String? ?? '',
+      style: json['style'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String? ?? '',
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

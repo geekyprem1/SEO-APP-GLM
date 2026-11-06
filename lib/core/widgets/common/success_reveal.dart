@@ -14,14 +14,31 @@ class SuccessReveal extends StatefulWidget {
 
 class _SuccessRevealState extends State<SuccessReveal>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 360),
-  );
+  late final AnimationController _controller;
+  bool _started = false;
 
   @override
   void initState() {
     super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 360),
+    );
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+
+    // Respect the OS "reduce motion" setting: show the result immediately and
+    // skip both the animation and the haptic.
+    if (MediaQuery.of(context).disableAnimations) {
+      _controller.value = 1;
+      return;
+    }
+
     HapticFeedback.lightImpact();
     _controller.forward();
   }

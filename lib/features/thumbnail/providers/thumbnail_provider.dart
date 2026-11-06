@@ -31,6 +31,8 @@ class ThumbnailNotifier extends StateNotifier<ThumbnailState> {
       _lastResult = result;
       state = AsyncValue.data(result);
     } catch (error, stack) {
+      // Don't keep a stale result after a failure.
+      _lastResult = null;
       state = AsyncValue.error(error, stack);
     }
   }

@@ -1,3 +1,4 @@
+import 'dart:async' as async;
 import 'dart:convert';
 
 import 'package:cloud_functions/cloud_functions.dart';
@@ -33,17 +34,23 @@ class CloudFunctionsAiService implements AiService {
     final callable = _functions.httpsCallable(AppConstants.generateContentFunction);
       // NOTE: no cacheKey is sent — the server derives a uid-namespaced
       // SHA-256 cache key itself. Client-supplied keys are never trusted.
-      final response = await callable.call<dynamic>({
-        'feature': request.feature.id,
-        'prompt': request.prompt,
-        'schema': request.schema,
-        'maxTokens': request.maxTokens,
-        'temperature': request.temperature,
-      });
+      final response = await callable
+          .call<dynamic>({
+            'feature': request.feature.id,
+            'prompt': request.prompt,
+            'schema': request.schema,
+            'maxTokens': request.maxTokens,
+            'temperature': request.temperature,
+          })
+          .timeout(const Duration(seconds: AppConstants.aiTimeoutSeconds));
 
       // cloud_functions returns nested maps as Map<Object?, Object?> on
       // Android/iOS. Round-trip through JSON to normalize to Map<String, dynamic>.
-      final data = jsonDecode(jsonEncode(response.data)) as Map<String, dynamic>;
+      final decoded = jsonDecode(jsonEncode(response.data));
+      if (decoded is! Map) {
+        throw ApiException('Unexpected AI response shape.');
+      }
+      final data = Map<String, dynamic>.from(decoded);
 
       // Check for server-side quota/budget/rate-limit signals.
       final error = data['error'] as String?;
@@ -61,11 +68,16 @@ class CloudFunctionsAiService implements AiService {
         }
       }
 
+      final json = data['json'];
       return AiResult(
         rawText: data['rawText'] as String? ?? '',
-        json: data['json'] as Map<String, dynamic>?,
-        tokensUsed: data['tokensUsed'] as int? ?? 0,
+        json: json is Map ? Map<String, dynamic>.from(json) : null,
+        tokensUsed: (data['tokensUsed'] as num?)?.toInt() ?? 0,
         estimatedCost: (data['estimatedCost'] as num?)?.toDouble() ?? 0.0,
+      );
+    } on async.TimeoutException {
+      throw TimeoutException(
+        'This is taking too long. Please try again.',
       );
     } catch (e, st) {
       throw _errorHandler.convert(e, st);

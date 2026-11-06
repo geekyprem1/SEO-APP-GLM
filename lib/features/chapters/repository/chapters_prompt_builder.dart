@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 
 class ChaptersPromptBuilder {
@@ -13,6 +14,7 @@ class ChaptersPromptBuilder {
     required String durationLabel,
     ContentFormat format = ContentFormat.longForm,
   }) {
+    final safeTopic = PromptUtils.clean(topic, field: 'topic');
     final platform =
         format.isShorts ? 'short-form video (~60s)' : 'YouTube long-form video';
     final countHint = format.isShorts
@@ -20,7 +22,7 @@ class ChaptersPromptBuilder {
         : 'Return 8–12 chapters with realistic timestamps for a $durationLabel video.';
 
     final prompt = '''
-You are a YouTube packaging expert. Create chapter timestamps for a $platform about "$topic" in $language.
+You are a YouTube packaging expert. Create chapter timestamps for a $platform about "$safeTopic" in $language.
 Target length: $durationLabel.
 $countHint
 
@@ -29,6 +31,7 @@ Rules:
 - Titles should be clear and SEO-friendly (3–6 words).
 - Times must be ascending and realistic.
 - Also return descriptionBlock: plain text lines "M:SS Title" ready to paste into YouTube description.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON.
 
 Return JSON:

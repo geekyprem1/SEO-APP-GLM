@@ -48,7 +48,7 @@ class _ThumbnailGeneratorScreenState
   }
 
   Future<void> _generate() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(
@@ -221,7 +221,7 @@ class _ThumbnailGeneratorScreenState
   Widget _buildImageResult(GeneratedThumbnail thumbnail) {
     final theme = Theme.of(context);
     // Shorts → vertical 9:16; long-form video → horizontal 16:9.
-    final format = ref.read(selectedFormatProvider);
+    final format = ref.watch(selectedFormatProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -232,18 +232,32 @@ class _ThumbnailGeneratorScreenState
               borderRadius: BorderRadius.circular(AppSizes.radiusLg),
               child: AspectRatio(
                 aspectRatio: format.thumbnailAspectRatio,
-                child: CachedNetworkImage(
-                  imageUrl: thumbnail.imageUrl,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  errorWidget: (_, __, ___) => Container(
-                    color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                    child: const Center(child: Icon(Icons.broken_image_rounded, size: 48)),
-                  ),
-                ),
+                child: thumbnail.imageUrl.isEmpty
+                    ? Container(
+                        color: theme.colorScheme.surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        child: const Center(
+                          child: Icon(Icons.broken_image_rounded, size: 48),
+                        ),
+                      )
+                    : CachedNetworkImage(
+                        imageUrl: thumbnail.imageUrl,
+                        cacheKey: thumbnail.imageUrl,
+                        memCacheWidth: 1200,
+                        fit: BoxFit.cover,
+                        placeholder: (_, __) => Container(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3),
+                          child: const Center(child: CircularProgressIndicator()),
+                        ),
+                        errorWidget: (_, __, ___) => Container(
+                          color: theme.colorScheme.surfaceContainerHighest
+                              .withValues(alpha: 0.3),
+                          child: const Center(
+                            child: Icon(Icons.broken_image_rounded, size: 48),
+                          ),
+                        ),
+                      ),
               ),
             ),
           ),

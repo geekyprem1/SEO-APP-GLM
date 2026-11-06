@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_duration.dart';
 import '../../../shared/models/content_format.dart';
 import '../../../shared/models/tone.dart';
@@ -24,6 +25,7 @@ class ContentStudioPromptBuilder {
     required Tone tone,
     required ContentDuration duration,
   }) {
+    final safeTopic = PromptUtils.clean(topic, field: 'topic');
     final platform =
         format.isShorts ? 'YouTube Shorts (vertical short-form)' : 'YouTube long-form video';
 
@@ -32,7 +34,7 @@ class ContentStudioPromptBuilder {
         : '- "script": a structured script that is ${duration.promptHint}. Use an intro, 3–5 clearly labelled sections with key talking points, and an outro. Do NOT write every word verbatim — keep it as a usable outline.';
 
     final prompt = '''
-You are an expert YouTube content strategist, scriptwriter, and SEO specialist. Create a complete, ready-to-publish content package for a $platform about "$topic".
+You are an expert YouTube content strategist, scriptwriter, and SEO specialist. Create a complete, ready-to-publish content package for a $platform about "$safeTopic".
 
 Write ALL text in $language, using a ${tone.promptHint} tone.
 
@@ -49,6 +51,7 @@ $scriptRule
 Rules:
 - Tailor every field to the topic, format, tone, and target length.
 - Include the main keyword naturally throughout.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON — no markdown, code fences, or extra commentary.
 
 Return JSON in this exact shape:

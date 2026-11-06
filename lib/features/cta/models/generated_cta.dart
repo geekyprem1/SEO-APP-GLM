@@ -44,11 +44,13 @@ class GeneratedCta {
 
   factory GeneratedCta.fromJson(Map<String, dynamic> json) {
     return GeneratedCta(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       ctas: JsonUtils.stringList(json['ctas']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

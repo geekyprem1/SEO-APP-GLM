@@ -156,7 +156,7 @@ class ContentPackage {
     }
 
     return ContentPackage(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       topic: json['topic'] as String? ?? '',
       format: resolveFormat(json['format']),
       language: json['language'] as String? ?? '',
@@ -170,7 +170,9 @@ class ContentPackage {
       hashtags: _stringList(json['hashtags']),
       thumbnailTextIdeas: _stringList(json['thumbnailTextIdeas']),
       cta: _string(json['cta']),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

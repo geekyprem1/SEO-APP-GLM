@@ -1,11 +1,11 @@
 {
-    "name": "short_seo_ai",
-    "short_name": "short_seo_ai",
+    "name": "Tubora",
+    "short_name": "Tubora",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
     "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "description": "AI-powered SEO and content tools for YouTube creators.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

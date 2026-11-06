@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 
 /// Builds the AI prompt for the Hook Generator.
@@ -13,6 +14,7 @@ class HookPromptBuilder {
     required String language,
     ContentFormat format = ContentFormat.shorts,
   }) {
+    final safeTopic = PromptUtils.clean(topic, field: 'topic');
     final platform =
         format.isShorts ? 'YouTube Shorts' : 'YouTube long-form video';
     final focus = format.isShorts
@@ -20,7 +22,7 @@ class HookPromptBuilder {
         : 'Optimize for the cold open of a longer video. Curiosity without clickbait.';
 
     final prompt = '''
-You are a YouTube retention expert. Generate exactly 12 powerful opening hooks for a $platform about "$topic" in $language.
+You are a YouTube retention expert. Generate exactly 12 powerful opening hooks for a $platform about "$safeTopic" in $language.
 
 $focus
 
@@ -29,6 +31,7 @@ Rules:
 - Mix styles: question, bold claim, pattern interrupt, story tease, number hook.
 - Sound natural when spoken on camera.
 - No misleading clickbait.
+- ${PromptUtils.instruction}
 - Return ONLY valid JSON.
 
 Return JSON:

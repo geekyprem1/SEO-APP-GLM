@@ -57,8 +57,13 @@ class CloudFunctionsImageService implements ImageGenerationService {
         }
       }
 
+      final imageUrl = data['imageUrl'];
+      if (imageUrl is! String || imageUrl.isEmpty) {
+        throw ApiException('Image generation returned no image.');
+      }
+
       return ImageResult(
-        imageUrl: data['imageUrl'] as String,
+        imageUrl: imageUrl,
         width: data['width'] as int? ?? request.width,
         height: data['height'] as int? ?? request.height,
         estimatedCost: (data['estimatedCost'] as num?)?.toDouble() ?? 0.0,

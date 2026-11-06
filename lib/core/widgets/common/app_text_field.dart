@@ -19,6 +19,8 @@ class AppTextField extends StatelessWidget {
     this.suffixIcon,
     this.prefixIcon,
     this.inputFormatters,
+    this.autofillHints,
+    this.enableSuggestions = true,
     this.enabled = true,
   });
 
@@ -36,6 +38,8 @@ class AppTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final Widget? prefixIcon;
   final List<TextInputFormatter>? inputFormatters;
+  final Iterable<String>? autofillHints;
+  final bool enableSuggestions;
   final bool enabled;
 
   @override
@@ -59,6 +63,8 @@ class AppTextField extends StatelessWidget {
       textInputAction: textInputAction,
       onFieldSubmitted: onSubmitted,
       inputFormatters: inputFormatters,
+      autofillHints: autofillHints,
+      enableSuggestions: enableSuggestions,
       enabled: enabled,
       style: Theme.of(context).textTheme.bodyLarge,
     );

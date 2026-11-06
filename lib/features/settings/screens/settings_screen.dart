@@ -39,19 +39,40 @@ class SettingsScreen extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      await ref.read(historyProvider.notifier).clearAll();
-      if (context.mounted) {
-        UiUtils.showSuccessSnackBar(context, 'History cleared');
+      try {
+        await ref.read(historyProvider.notifier).clearAll();
+        if (context.mounted) {
+          UiUtils.showSuccessSnackBar(context, 'History cleared');
+        }
+      } catch (_) {
+        if (context.mounted) {
+          UiUtils.showErrorSnackBar(
+            context,
+            'Could not clear history. Please try again.',
+          );
+        }
       }
     }
   }
 
   Future<void> _launchUrl(BuildContext context, String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (context.mounted) {
-      UiUtils.showErrorSnackBar(context, 'Could not open link');
+    final uri = Uri.tryParse(url);
+    if (uri == null) {
+      if (context.mounted) {
+        UiUtils.showErrorSnackBar(context, 'Could not open link');
+      }
+      return;
+    }
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else if (context.mounted) {
+        UiUtils.showErrorSnackBar(context, 'Could not open link');
+      }
+    } catch (_) {
+      if (context.mounted) {
+        UiUtils.showErrorSnackBar(context, 'Could not open link');
+      }
     }
   }
 
@@ -180,7 +201,10 @@ class SettingsScreen extends ConsumerWidget {
                     icon: Icons.mail_rounded,
                     onTap: () => _launchUrl(
                       context,
-                      'mailto:${AppConstants.contactEmail}',
+                      Uri(
+                        scheme: 'mailto',
+                        path: AppConstants.contactEmail,
+                      ).toString(),
                     ),
                   ),
                 ],

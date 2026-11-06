@@ -1,75 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/router/routes.dart';
-import '../providers/auth_provider.dart';
 
-/// Splash screen: shows branding → resolves session → Home (if signed in)
-/// or Login (if not).
-class SplashScreen extends ConsumerStatefulWidget {
+/// Splash screen: branding while the router resolves the session.
+///
+/// Intentionally passive — navigation is owned by the router (and by the login
+/// screen after an explicit sign-in), so this screen never issues `go()` calls.
+class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
   @override
-  ConsumerState<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends ConsumerState<SplashScreen> {
-  bool _triggered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Failsafe: if auth doesn't resolve in 3 seconds, route based on current state.
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted && !_triggered) {
-        final state = ref.read(authStateProvider);
-        if (state is! AsyncLoading) {
-          _handleAuth(state);
-        } else {
-          _goLogin();
-        }
-      }
-    });
-  }
-
-  void _goLogin() {
-    if (_triggered || !mounted) return;
-    _triggered = true;
-    context.go(AppRoutes.login);
-  }
-
-  void _handleAuth(AuthState state) {
-    if (_triggered || !mounted || state.isLoading || state.isRefreshing) return;
-
-    state.when(
-      data: (user) {
-        _triggered = true;
-        context.go(user != null ? AppRoutes.home : AppRoutes.login);
-      },
-      error: (_, __) => _goLogin(),
-      loading: () {},
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authStateProvider);
-
-    // React to auth state changes.
-    ref.listen<AuthState>(authStateProvider, (_, next) => _handleAuth(next));
-
-    // Also handle initial state if already resolved.
-    if (authState is! AsyncLoading && !_triggered) {
-      // Use post-frame to avoid calling context.go during build.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _handleAuth(authState);
-      });
-    }
-
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.primary,

@@ -76,14 +76,21 @@ class GeneratedSeries {
 
   factory GeneratedSeries.fromJson(Map<String, dynamic> json) {
     final raw = json['ideas'] as List<dynamic>? ?? [];
+    final ideas = raw.map((e) {
+      if (e is String) return SeriesIdea(title: e);
+      if (e is Map) {
+        return SeriesIdea.fromJson(Map<String, dynamic>.from(e));
+      }
+      return const SeriesIdea(title: '');
+    }).where((i) => i.title.trim().isNotEmpty).toList();
     return GeneratedSeries(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      language: json['language'] as String,
-      ideas: raw
-          .map((e) => SeriesIdea.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList(),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      language: json['language'] as String? ?? '',
+      ideas: ideas,
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

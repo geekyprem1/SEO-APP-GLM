@@ -33,7 +33,7 @@ class _DescriptionGeneratorScreenState extends ConsumerState<DescriptionGenerato
   }
 
   Future<void> _generate() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isSubmitting) return;
 
     ref.read(analyticsServiceProvider).logEvent(name: 'description_generate_tapped');

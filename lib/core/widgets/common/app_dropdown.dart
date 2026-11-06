@@ -26,11 +26,30 @@ class AppDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    // An empty catalog (or a stale selection missing from a changed catalog)
+    // would otherwise throw "There should be exactly one item with [value]".
+    if (items.isEmpty) {
+      return DropdownButtonFormField<T>(
+        items: const [],
+        onChanged: null,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint ?? 'No options available',
+        ),
+        icon: const Icon(Icons.keyboard_arrow_down_rounded),
+        isExpanded: true,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+      );
+    }
+
+    final safeValue = items.contains(value) ? value : items.first;
+
     // `value` remains the controlled-selection API; `initialValue` is for
     // one-shot form defaults and would break parent-driven dropdowns.
     return DropdownButtonFormField<T>(
       // ignore: deprecated_member_use
-      value: value,
+      value: safeValue,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,

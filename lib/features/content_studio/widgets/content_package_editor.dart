@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_sizes.dart';
-import '../../../core/services/clipboard_service.dart';
 import '../../../core/services/haptic_service.dart';
 import '../../../core/services/share_service.dart';
 import '../../../core/utils/ui_utils.dart';
@@ -51,16 +50,37 @@ class _ContentPackageEditorState extends ConsumerState<ContentPackageEditor> {
   @override
   void initState() {
     super.initState();
-    final p = widget.package;
-    _titles = TextEditingController(text: p.titles.join('\n'));
-    _hook = TextEditingController(text: p.hook);
-    _script = TextEditingController(text: p.script);
-    _description = TextEditingController(text: p.description);
-    _keywords = TextEditingController(text: p.keywords.join('\n'));
-    _hashtags = TextEditingController(text: p.hashtags.join('\n'));
-    _thumbnailTextIdeas =
-        TextEditingController(text: p.thumbnailTextIdeas.join('\n'));
-    _cta = TextEditingController(text: p.cta);
+    _titles = TextEditingController();
+    _hook = TextEditingController();
+    _script = TextEditingController();
+    _description = TextEditingController();
+    _keywords = TextEditingController();
+    _hashtags = TextEditingController();
+    _thumbnailTextIdeas = TextEditingController();
+    _cta = TextEditingController();
+    _syncControllers(widget.package);
+  }
+
+  @override
+  void didUpdateWidget(covariant ContentPackageEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A different package (e.g. next history entry with the same widget
+    // position) must refresh the controllers, otherwise the editor keeps
+    // showing stale text.
+    if (widget.package.id != oldWidget.package.id) {
+      _syncControllers(widget.package);
+    }
+  }
+
+  void _syncControllers(ContentPackage p) {
+    _titles.text = p.titles.join('\n');
+    _hook.text = p.hook;
+    _script.text = p.script;
+    _description.text = p.description;
+    _keywords.text = p.keywords.join('\n');
+    _hashtags.text = p.hashtags.join('\n');
+    _thumbnailTextIdeas.text = p.thumbnailTextIdeas.join('\n');
+    _cta.text = p.cta;
   }
 
   @override
@@ -94,17 +114,35 @@ class _ContentPackageEditorState extends ConsumerState<ContentPackageEditor> {
       );
 
   Future<void> _copy(String text) async {
-    await ref.read(clipboardServiceProvider).copy(text);
-    ref.read(hapticServiceProvider).light();
-    if (mounted) {
-      UiUtils.showSuccessSnackBar(context, 'Copied to clipboard');
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      if (mounted) {
+        UiUtils.showErrorSnackBar(context, 'Nothing to copy yet.');
+      }
+      return;
     }
+    await UiUtils.copyToClipboard(
+      context,
+      trimmed,
+      successMessage: 'Copied to clipboard',
+    );
+    ref.read(hapticServiceProvider).light();
   }
 
   Future<void> _copyAll() => _copy(_currentPackage().shareText);
 
   Future<void> _shareAll() async {
-    await ref.read(shareServiceProvider).share(_currentPackage().shareText);
+    final trimmed = _currentPackage().shareText.trim();
+    if (trimmed.isEmpty) {
+      if (mounted) {
+        UiUtils.showErrorSnackBar(context, 'Nothing to share yet.');
+      }
+      return;
+    }
+    await ref.read(shareServiceProvider).share(
+          trimmed,
+          origin: UiUtils.shareOrigin(context),
+        );
     ref.read(hapticServiceProvider).light();
   }
 

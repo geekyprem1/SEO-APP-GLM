@@ -2,7 +2,7 @@ name: short_seo_ai
 description: "ShortSEO AI - AI-powered SEO content generator for YouTube Shorts creators."
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.3+4
 
 environment:
   sdk: ^3.6.2
@@ -75,3 +75,20 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
+
+  # Bundled Inter family so GoogleFonts never fetches at runtime
+  # (no first-paint block, no offline FOUT). Weights mirror the ones used
+  # in lib/core/theme.
+  fonts:
+    - family: Inter
+      fonts:
+        - asset: assets/fonts/Inter-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Inter-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Inter-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Inter-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Inter-ExtraBold.ttf
+          weight: 800

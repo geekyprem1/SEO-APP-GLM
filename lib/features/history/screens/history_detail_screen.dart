@@ -138,10 +138,29 @@ class HistoryDetailScreen extends ConsumerWidget {
           ).animate().fadeIn(duration: 300.ms),
           const SizedBox(height: AppSizes.lg),
           // Rehydrated content
-          _buildRehydratedContent(context, theme, item, ref),
+          _buildSafeRehydratedContent(context, theme, item, ref),
         ],
       ),
     );
+  }
+
+  /// Guarded wrapper around [_buildRehydratedContent]: a corrupt stored entry
+  /// degrades to an error card instead of crashing the screen.
+  Widget _buildSafeRehydratedContent(
+    BuildContext context,
+    ThemeData theme,
+    HistoryItem item,
+    WidgetRef ref,
+  ) {
+    try {
+      return _buildRehydratedContent(context, theme, item, ref);
+    } catch (_) {
+      return ErrorState(
+        failure: const UnknownFailure(
+          message: 'This saved item could not be displayed.',
+        ),
+      );
+    }
   }
 
   /// Rehydrates the concrete model from [item.type] + [item.data] and
@@ -352,24 +371,32 @@ class HistoryDetailScreen extends ConsumerWidget {
     Map<String, dynamic> data,
   ) {
     final imageUrl = data['imageUrl'] as String? ?? '';
+    final hasImage = imageUrl.isNotEmpty;
+    final fallback = Container(
+      height: 300,
+      color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+      child: const Center(child: Icon(Icons.broken_image_rounded, size: 48)),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-          child: CachedNetworkImage(
-            imageUrl: imageUrl,
-            placeholder: (_, __) => Container(
-              height: 300,
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-            errorWidget: (_, __, ___) => Container(
-              height: 300,
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-              child: const Center(child: Icon(Icons.broken_image_rounded, size: 48)),
-            ),
-          ),
+          child: hasImage
+              ? CachedNetworkImage(
+                  imageUrl: imageUrl,
+                  cacheKey: imageUrl,
+                  memCacheWidth: 1200,
+                  placeholder: (_, __) => Container(
+                    height: 300,
+                    color: theme.colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
+                    child: const Center(child: CircularProgressIndicator()),
+                  ),
+                  errorWidget: (_, __, ___) => fallback,
+                )
+              : fallback,
         ),
         const SizedBox(height: AppSizes.md),
         ResultActionsBar(text: imageUrl),

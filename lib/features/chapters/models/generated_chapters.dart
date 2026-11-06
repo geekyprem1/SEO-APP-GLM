@@ -85,15 +85,18 @@ class GeneratedChapters {
   factory GeneratedChapters.fromJson(Map<String, dynamic> json) {
     final raw = json['chapters'] as List<dynamic>? ?? [];
     return GeneratedChapters(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      language: json['language'] as String,
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      language: json['language'] as String? ?? '',
       durationLabel: json['durationLabel'] as String? ?? '',
       chapters: raw
-          .map((e) => ChapterItem.fromJson(Map<String, dynamic>.from(e as Map)))
+          .whereType<Map>()
+          .map((e) => ChapterItem.fromJson(Map<String, dynamic>.from(e)))
           .toList(),
       descriptionBlock: json['descriptionBlock'] as String? ?? '',
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

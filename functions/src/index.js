@@ -33,11 +33,13 @@ const {
   releaseQuota,
   incrementUsage,
   checkBudget,
-  addCost,
+  reserveBudget,
+  releaseBudget,
   getCache,
   setCache,
   logRequest,
   ESTIMATED_COSTS,
+  METADATA_LIMITS,
   validateGenerateContent,
   validateGenerateImage,
   validateAnalyzeSeo,
@@ -85,7 +87,7 @@ exports.generateContent = onCall(
     const { feature, prompt, schema, maxTokens, temperature } =
       validateGenerateContent(request.data);
 
-    // 3–5. Prechecks (rate / budget / cache). Quota is reserved only after a
+    // 3–5. Prechecks (rate / cache). Budget + quota are reserved only after a
     // cache miss so repeated identical prompts do not burn free daily slots.
     const cacheKey = buildCacheKey(uid, {
       kind: 'text',
@@ -96,9 +98,8 @@ exports.generateContent = onCall(
       temperature,
     });
 
-    const [, , cached] = await Promise.all([
+    const [, cached] = await Promise.all([
       checkRateLimit(uid),
-      checkBudget(),
       getCache(cacheKey),
     ]);
 
@@ -107,12 +108,19 @@ exports.generateContent = onCall(
       return cached;
     }
 
-    // 6. Atomically reserve quota, then call OpenRouter.
-    await checkQuota(uid, feature);
+    // 6. Atomically reserve budget + quota, then call OpenRouter. Both are
+    // refunded below if the provider call fails.
+    const cost = ESTIMATED_COSTS.text;
+    await reserveBudget(cost);
+    try {
+      await checkQuota(uid, feature);
+    } catch (error) {
+      await releaseBudget(cost);
+      throw error; // quota signal (QUOTA_EXCEEDED) preserved for the client
+    }
 
     try {
       const result = await generateText({ prompt, schema, maxTokens, temperature });
-      const cost = ESTIMATED_COSTS.text;
 
       const response = {
         rawText: result.rawText,
@@ -122,11 +130,10 @@ exports.generateContent = onCall(
       };
 
       // 7. Persist side-effects in parallel (must await — CF may freeze after return).
-      // Quota was already reserved in checkQuota; incrementUsage is a no-op.
+      // Budget + quota were already reserved above; incrementUsage is a no-op.
       await Promise.all([
         setCache(cacheKey, response),
         incrementUsage(uid, feature),
-        addCost(cost),
         logRequest({
           uid,
           feature,
@@ -139,8 +146,8 @@ exports.generateContent = onCall(
 
       return response;
     } catch (error) {
-      // Refund the reserved slot so a provider failure does not eat free quota.
-      await releaseQuota(uid, feature);
+      // Refund the reservations so a provider failure does not eat quota/budget.
+      await Promise.all([releaseQuota(uid, feature), releaseBudget(cost)]);
       // Log full detail server-side; return a generic message to the client.
       logger.error('generateContent failed', {
         uid,
@@ -178,7 +185,8 @@ exports.generateImage = onCall(
     const { feature, prompt, width, height } =
       validateGenerateImage(request.data);
 
-    // 3–5. Prechecks (rate / budget / cache). Reserve quota only on cache miss.
+    // 3–5. Prechecks (rate / cache). Budget + quota are reserved only on a
+    // cache miss so repeated identical prompts do not burn free daily slots.
     const cacheKey = buildCacheKey(uid, {
       kind: 'image',
       feature,
@@ -187,9 +195,8 @@ exports.generateImage = onCall(
       height,
     });
 
-    const [, , cached] = await Promise.all([
+    const [, cached] = await Promise.all([
       checkRateLimit(uid),
-      checkBudget(),
       getCache(cacheKey),
     ]);
 
@@ -198,7 +205,14 @@ exports.generateImage = onCall(
       return cached;
     }
 
-    await checkQuota(uid, feature);
+    const cost = ESTIMATED_COSTS.image;
+    await reserveBudget(cost);
+    try {
+      await checkQuota(uid, feature);
+    } catch (error) {
+      await releaseBudget(cost);
+      throw error; // quota signal (QUOTA_EXCEEDED) preserved for the client
+    }
 
     // 6. Call SiliconFlow (primary) → Replicate (fallback)
     let result;
@@ -218,7 +232,7 @@ exports.generateImage = onCall(
         usedModel = IMAGE_MODEL_REPLICATE;
         logger.info('Image generated via Replicate (fallback)', { uid, feature });
       } catch (repError) {
-        await releaseQuota(uid, feature);
+        await Promise.all([releaseQuota(uid, feature), releaseBudget(cost)]);
         logger.error('Both image providers failed', {
           uid,
           feature,
@@ -233,8 +247,6 @@ exports.generateImage = onCall(
       }
     }
 
-    const cost = ESTIMATED_COSTS.image;
-
     const response = {
       imageUrl: result.imageUrl,
       width: result.width,
@@ -242,11 +254,10 @@ exports.generateImage = onCall(
       estimatedCost: cost,
     };
 
-    // Quota already reserved; incrementUsage is a no-op.
+    // Budget + quota already reserved; incrementUsage is a no-op.
     await Promise.all([
       setCache(cacheKey, response),
       incrementUsage(uid, feature),
-      addCost(cost),
       logRequest({
         uid,
         feature,
@@ -277,31 +288,66 @@ exports.analyzeSeo = onCall(
     const { action, videoUrlOrId, channelId, query, maxResults } =
       validateAnalyzeSeo(request.data);
 
-    // 3. Rate limit on a dedicated 'seo' bucket. This protects the shared
-    // YouTube Data API v3 quota from abuse, while keeping its window separate
-    // from the default bucket so the follow-up generateContent call (which
-    // uses the default bucket) is not tripped by this metadata fetch.
-    await checkRateLimit(uid, 'seo');
+    // 3. Prechecks: rate limit on a dedicated 'seo' bucket (separate from the
+    // default bucket so the follow-up generateContent call is not tripped),
+    // the global budget kill switch, and the response cache.
+    const cacheKey = buildCacheKey(uid, {
+      kind: 'seo',
+      action,
+      videoUrlOrId,
+      channelId,
+      query,
+      maxResults,
+    });
+
+    const [, , cached] = await Promise.all([
+      checkRateLimit(uid, 'seo'),
+      checkBudget(),
+      getCache(cacheKey),
+    ]);
+
+    if (cached) {
+      logger.info('SEO cache hit', { uid, action });
+      return cached;
+    }
+
+    // 4. Reserve one metadata-fetch unit. These calls cost no money but consume
+    // the shared YouTube Data API quota, so they get their own daily ceiling.
+    await checkQuota(uid, 'seoMetadata', METADATA_LIMITS);
 
     try {
       switch (action) {
         case 'fetchVideo': {
           const video = await fetchVideo(videoUrlOrId);
-          return { video };
+          const response = { video };
+          if (video?.videoId) {
+            await cacheBestEffort(cacheKey, response, { uid, action });
+          }
+          return response;
         }
         case 'fetchChannel': {
           const channel = await fetchChannel(channelId);
-          return { channel };
+          const response = { channel };
+          if (channel?.channelId) {
+            await cacheBestEffort(cacheKey, response, { uid, action });
+          }
+          return response;
         }
         case 'search': {
           const results = await searchVideos(query, maxResults);
-          return { results };
+          const response = { results };
+          if (Array.isArray(results) && results.length > 0) {
+            await cacheBestEffort(cacheKey, response, { uid, action });
+          }
+          return response;
         }
         default:
           // Unreachable: action is allowlisted in validateAnalyzeSeo.
           throw new HttpsError('invalid-argument', 'Unknown action.');
       }
     } catch (error) {
+      // Refund the reserved metadata unit — nothing was served.
+      await releaseQuota(uid, 'seoMetadata');
       // Preserve explicit client errors (e.g. invalid-argument); hide the rest.
       if (error instanceof HttpsError) throw error;
       logger.error('analyzeSeo failed', {
@@ -316,3 +362,14 @@ exports.analyzeSeo = onCall(
     }
   }
 );
+
+/**
+ * Best-effort SEO cache write: a cache failure must never fail the request.
+ */
+async function cacheBestEffort(cacheKey, response, { uid, action }) {
+  try {
+    await setCache(cacheKey, response);
+  } catch (err) {
+    logger.warn('SEO cache write failed', { uid, action, error: err.message });
+  }
+}

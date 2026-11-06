@@ -74,14 +74,21 @@ class GeneratedCaptions {
 
   factory GeneratedCaptions.fromJson(Map<String, dynamic> json) {
     final raw = json['captions'] as List<dynamic>? ?? [];
+    final captions = raw.map((e) {
+      if (e is String) return CaptionLine(text: e);
+      if (e is Map) {
+        return CaptionLine.fromJson(Map<String, dynamic>.from(e));
+      }
+      return const CaptionLine(text: '');
+    }).where((c) => c.text.trim().isNotEmpty).toList();
     return GeneratedCaptions(
-      id: json['id'] as String,
-      topic: json['topic'] as String,
-      language: json['language'] as String,
-      captions: raw
-          .map((e) => CaptionLine.fromJson(Map<String, dynamic>.from(e as Map)))
-          .toList(),
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      id: json['id'] as String? ?? '',
+      topic: json['topic'] as String? ?? '',
+      language: json['language'] as String? ?? '',
+      captions: captions,
+      createdAt:
+          DateTime.tryParse(json['createdAt'] as String? ?? '') ??
+              DateTime.now(),
     );
   }
 

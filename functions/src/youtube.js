@@ -6,6 +6,7 @@
  *   firebase functions:secrets:set YOUTUBE_API_KEY
  */
 
+const { HttpsError } = require('firebase-functions/v2/https');
 const { google } = require('googleapis');
 
 const DEFAULT_MAX_RESULTS = 10;
@@ -16,7 +17,10 @@ const DEFAULT_MAX_RESULTS = 10;
 function getYouTubeClient() {
   const apiKey = process.env.YOUTUBE_API_KEY;
   if (!apiKey) {
-    throw new Error('YOUTUBE_API_KEY is not set. Run: firebase functions:secrets:set YOUTUBE_API_KEY');
+    throw new HttpsError(
+      'internal',
+      'YouTube service is not configured.'
+    );
   }
 
   return google.youtube({
@@ -27,14 +31,16 @@ function getYouTubeClient() {
 
 /**
  * Extracts the 11-char video ID from a YouTube URL.
+ * Matching is case-insensitive on the URL parts while preserving the ID's
+ * own case (video IDs are case-sensitive).
  */
 function extractVideoId(urlOrId) {
   if (urlOrId.length === 11) return urlOrId;
 
   const patterns = [
-    /youtube\.com\/shorts\/([\w-]{11})/,
-    /youtu\.be\/([\w-]{11})/,
-    /[?&]v=([\w-]{11})/,
+    /youtube\.com\/shorts\/([\w-]{11})/i,
+    /youtu\.be\/([\w-]{11})/i,
+    /[?&]v=([\w-]{11})/i,
   ];
 
   for (const pattern of patterns) {
@@ -53,7 +59,7 @@ async function fetchVideo(videoUrlOrId) {
   const videoId = extractVideoId(videoUrlOrId);
 
   if (!videoId) {
-    throw new Error('Invalid YouTube URL.');
+    throw new HttpsError('invalid-argument', 'Invalid YouTube URL.');
   }
 
   const response = await youtube.videos.list({
@@ -62,7 +68,7 @@ async function fetchVideo(videoUrlOrId) {
   });
 
   if (!response.data.items || response.data.items.length === 0) {
-    throw new Error('Video not found.');
+    throw new HttpsError('not-found', 'Video not found.');
   }
 
   const item = response.data.items[0];
@@ -96,7 +102,7 @@ async function fetchChannel(channelId) {
   });
 
   if (!response.data.items || response.data.items.length === 0) {
-    throw new Error('Channel not found.');
+    throw new HttpsError('not-found', 'Channel not found.');
   }
 
   const item = response.data.items[0];
@@ -129,13 +135,16 @@ async function searchVideos(query, maxResults = DEFAULT_MAX_RESULTS) {
 
   const items = response.data.items || [];
 
-  return items.map((item) => ({
-    videoId: item.id?.videoId || '',
-    title: item.snippet?.title || '',
-    channelTitle: item.snippet?.channelTitle,
-    thumbnailUrl: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url,
-    publishedAt: item.snippet?.publishedAt,
-  }));
+  return items
+    .map((item) => ({
+      videoId: item.id?.videoId || '',
+      title: item.snippet?.title || '',
+      channelTitle: item.snippet?.channelTitle,
+      thumbnailUrl: item.snippet?.thumbnails?.high?.url || item.snippet?.thumbnails?.default?.url,
+      publishedAt: item.snippet?.publishedAt,
+    }))
+    // Drop entries YouTube returns without a usable video id.
+    .filter((result) => result.videoId);
 }
 
 module.exports = { fetchVideo, fetchChannel, searchVideos, extractVideoId };

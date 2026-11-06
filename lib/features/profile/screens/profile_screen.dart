@@ -19,7 +19,12 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final user = ref.watch(authStateProvider).valueOrNull;
-    final plan = ref.watch(userPlanProvider).valueOrNull ?? UserPlan.free;
+    // Never default to Free on loading/error — a paying Pro user must not see
+    // an upgrade prompt because the plan read failed. Signed-out users get
+    // free straight from the provider.
+    final plan = ref.watch(userPlanProvider).valueOrNull;
+    final isKnownPlan = plan != null;
+    final isPro = plan?.isPro ?? false;
 
     final isGuest = user?.isAnonymous ?? true;
     final name = (user?.displayName?.isNotEmpty ?? false)
@@ -77,9 +82,9 @@ class ProfileScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(AppSizes.paddingMd),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(AppSizes.radiusLg),
-                color: plan.isPro ? AppColors.primarySoft : AppColors.surface,
+                color: isPro ? AppColors.primarySoft : AppColors.surface,
                 border: Border.all(
-                  color: plan.isPro
+                  color: isPro
                       ? AppColors.primary.withValues(alpha: 0.3)
                       : AppColors.border,
                 ),
@@ -90,7 +95,7 @@ class ProfileScreen extends ConsumerWidget {
                   Row(
                     children: [
                       Icon(
-                        plan.isPro
+                        isPro
                             ? Icons.workspace_premium_rounded
                             : Icons.person_outline_rounded,
                         color: AppColors.primary,
@@ -98,7 +103,7 @@ class ProfileScreen extends ConsumerWidget {
                       const SizedBox(width: AppSizes.sm),
                       Expanded(
                         child: Text(
-                          '${plan.label} plan',
+                          isKnownPlan ? '${plan.label} plan' : 'Your plan',
                           style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
@@ -110,16 +115,16 @@ class ProfileScreen extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: plan.isPro
+                          color: isPro
                               ? AppColors.primary
                               : AppColors.primarySoft,
                           borderRadius:
                               BorderRadius.circular(AppSizes.radiusLg),
                         ),
                         child: Text(
-                          plan.isPro ? 'PRO' : 'FREE',
+                          isKnownPlan ? (isPro ? 'PRO' : 'FREE') : '…',
                           style: theme.textTheme.labelSmall?.copyWith(
-                            color: plan.isPro
+                            color: isPro
                                 ? Colors.white
                                 : AppColors.primaryDark,
                             fontWeight: FontWeight.w700,
@@ -130,15 +135,17 @@ class ProfileScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSizes.sm),
                   Text(
-                    plan.isPro
-                        ? 'Higher daily limits across every AI feature.'
-                        : '1 generation per feature daily · resets each day.',
+                    !isKnownPlan
+                        ? 'Checking your plan…'
+                        : isPro
+                            ? 'Higher daily limits across every AI feature.'
+                            : 'Free plan · daily limits reset each day.',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       height: 1.35,
                     ),
                   ),
-                  if (plan.isFree) ...[
+                  if (isKnownPlan && plan.isFree) ...[
                     const SizedBox(height: AppSizes.md),
                     FilledButton.icon(
                       onPressed: () => showProUpgradeDialog(
@@ -185,7 +192,7 @@ class ProfileScreen extends ConsumerWidget {
               )
             else
               OutlinedButton.icon(
-                onPressed: () => ref.read(authStateProvider.notifier).signOut(),
+                onPressed: () => ref.read(authActionProvider.notifier).signOut(),
                 icon: const Icon(Icons.logout_rounded),
                 label: const Text('Sign out'),
                 style: OutlinedButton.styleFrom(
@@ -227,7 +234,7 @@ class ProfileScreen extends ConsumerWidget {
     if (ok != true) return;
     try {
       await FirebaseFunctions.instance.httpsCallable('deleteMyAccount').call();
-      await ref.read(authStateProvider.notifier).signOut();
+      await ref.read(authActionProvider.notifier).signOut();
     } catch (e) {
       if (context.mounted) {
         UiUtils.showErrorSnackBar(context, 'Could not delete account. Please try again.');

@@ -80,14 +80,12 @@ class GeneratedListResult extends ConsumerWidget {
           onSave: onSave,
         ),
         const SizedBox(height: AppSizes.md),
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: AppSizes.sm),
-          itemBuilder: (context, index) {
-            final item = items[index];
-            return AppCard(
+        ...items.asMap().entries.map((entry) {
+          final index = entry.key;
+          final item = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: AppSizes.sm),
+            child: AppCard(
               child: Row(
                 children: [
                   if (numbered) ...[
@@ -96,7 +94,8 @@ class GeneratedListResult extends ConsumerWidget {
                       height: 28,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer,
-                        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+                        borderRadius:
+                            BorderRadius.circular(AppSizes.radiusFull),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -113,11 +112,11 @@ class GeneratedListResult extends ConsumerWidget {
                   ),
                 ],
               ),
-            );
-          },
-        ).animate().fadeIn(duration: 400.ms),
+            ),
+          );
+        }),
       ],
-    );
+    ).animate().fadeIn(duration: 400.ms);
   }
 }
 

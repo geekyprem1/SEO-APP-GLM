@@ -117,7 +117,10 @@ class AuthRepositoryImpl implements AuthRepository {
       // Best-effort Google sign-out so the account picker shows next time.
       try {
         await GoogleSignIn().signOut();
-      } catch (_) {}
+      } catch (e, st) {
+        // Reported so a broken Google sign-out is visible, not silently lost.
+        _errorHandler.convert(e, st);
+      }
       await _auth.signOut();
     } catch (e, st) {
       throw _errorHandler.convert(e, st);
@@ -125,22 +128,35 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   /// Ensures a `users/{uid}` document exists for the given user.
+  ///
+  /// Best-effort: sign-in must succeed even if this write fails, otherwise the
+  /// Firebase auth stream (signed in) and the notifier (error) disagree and the
+  /// router oscillates. The write runs in a transaction with `merge: true` so a
+  /// first-time create can never race or clobber a plan set by the backend.
   Future<void> _ensureUserDoc(fb_auth.User user) async {
-    final ref = _firestore.collection('users').doc(user.uid);
-    final snap = await ref.get();
-    if (!snap.exists) {
-      await ref.set({
-        'uid': user.uid,
-        'email': user.email,
-        'displayName': user.displayName,
-        'photoUrl': user.photoURL,
-        'isAnonymous': user.isAnonymous,
-        'plan': 'free',
-        'createdAt': FieldValue.serverTimestamp(),
-        'lastSeen': FieldValue.serverTimestamp(),
+    try {
+      final ref = _firestore.collection('users').doc(user.uid);
+      await _firestore.runTransaction((transaction) async {
+        final snap = await transaction.get(ref);
+        transaction.set(
+          ref,
+          {
+            'uid': user.uid,
+            'email': user.email,
+            'displayName': user.displayName,
+            'photoUrl': user.photoURL,
+            'isAnonymous': user.isAnonymous,
+            'lastSeen': FieldValue.serverTimestamp(),
+            if (!snap.exists) 'plan': 'free',
+            if (!snap.exists) 'createdAt': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
       });
-    } else {
-      await ref.update({'lastSeen': FieldValue.serverTimestamp()});
+    } catch (e, st) {
+      // Reported for visibility; never surfaced to the user and never allowed
+      // to fail the sign-in flow. The next sign-in retries the write.
+      _errorHandler.convert(e, st);
     }
   }
 

@@ -1,4 +1,5 @@
 import '../../../core/services/ai/models.dart';
+import '../../../core/utils/prompt_utils.dart';
 import '../../../shared/models/content_format.dart';
 import '../models/generated_thumbnail.dart';
 
@@ -27,11 +28,14 @@ class ThumbnailPromptBuilder {
     // Note: do NOT mention "YouTube"/"Shorts"/"thumbnail" in the prompt —
     // FLUX renders such words as literal text in the image. Aspect ratio is
     // controlled via width/height, not the prompt.
+    final safeTopic = PromptUtils.clean(topic, field: 'topic');
+    final safeCategory = PromptUtils.clean(category, field: 'category');
     final prompt = '''
-A visually striking $orientation image about "$topic" in the "$category" niche.
+A visually striking $orientation image about "$safeTopic" in the "$safeCategory" niche.
 Style: ${style.label} — ${style.description}.
 High-contrast, bold dramatic composition with cinematic lighting and a clear focal subject.
 Absolutely no text, no letters, no words, no captions, no watermarks, no logos, no UI elements — image only.
+${PromptUtils.instruction}
 ''';
 
     return ImageRequest(

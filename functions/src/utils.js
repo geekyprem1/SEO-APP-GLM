@@ -50,6 +50,15 @@ const PLAN_LIMITS = {
   pro: 50,
 };
 
+// Metadata fetches (analyzeSeo) are piping for other features rather than a
+// standalone feature, so they get a higher ceiling than PLAN_LIMITS — high
+// enough to never block a legitimate run, low enough to cap YouTube Data API
+// abuse (a search call alone costs 100 quota units).
+const METADATA_LIMITS = {
+  free: 10,
+  pro: 200,
+};
+
 // ─── Rate limiting (1 request per 5 seconds) ─────────────────────────────
 const RATE_LIMIT_SECONDS = 5;
 
@@ -88,22 +97,27 @@ async function verifyAuth(context) {
 async function checkRateLimit(uid, bucket = 'default') {
   const docId = bucket === 'default' ? uid : `${uid}_${bucket}`;
   const ref = db.collection('rateLimits').doc(docId);
-  const snap = await ref.get();
   const now = Date.now();
 
-  if (snap.exists) {
-    const lastRequest = snap.data().lastRequest?.toMillis?.() ?? 0;
-    const elapsed = (now - lastRequest) / 1000;
-    if (elapsed < RATE_LIMIT_SECONDS) {
-      throw new functionsHttpsError(
-        'resource-exhausted',
-        'Too many requests. Please wait a few seconds.',
-        { errorCode: 'RATE_LIMIT' }
-      );
-    }
-  }
+  // The read-check-write must be atomic: without a transaction a burst of
+  // parallel requests all read the same stale timestamp and pass the gate.
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
 
-  await ref.set({ lastRequest: admin.firestore.FieldValue.serverTimestamp() });
+    if (snap.exists) {
+      const lastRequest = snap.data().lastRequest?.toMillis?.() ?? 0;
+      const elapsed = (now - lastRequest) / 1000;
+      if (elapsed < RATE_LIMIT_SECONDS) {
+        throw functionsHttpsError(
+          'resource-exhausted',
+          'Too many requests. Please wait a few seconds.',
+          { errorCode: 'RATE_LIMIT' }
+        );
+      }
+    }
+
+    tx.set(ref, { lastRequest: new Date(now) }, { merge: true });
+  });
 }
 
 /**
@@ -121,9 +135,9 @@ async function getUserPlan(uid) {
  * both pass a soft read-check and overshoot the plan limit.
  * Returns the new count after reservation.
  */
-async function checkQuota(uid, feature) {
+async function checkQuota(uid, feature, limits = PLAN_LIMITS) {
   const plan = await getUserPlan(uid);
-  const limit = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+  const limit = limits[plan] ?? limits.free;
 
   const dateKey = new Date().toISOString().slice(0, 10); // yyyy-mm-dd
   const ref = db.collection('users').doc(uid).collection('usage').doc(dateKey);
@@ -179,7 +193,9 @@ async function incrementUsage(uid, feature) {
 }
 
 /**
- * Checks the global daily budget kill switch.
+ * Checks the global daily budget kill switch without reserving anything.
+ * Used by cost-free flows (e.g. SEO metadata fetches) that should still stop
+ * once the kill switch has tripped.
  */
 async function checkBudget() {
   const ref = db.collection('config').doc('daily_budget');
@@ -203,14 +219,52 @@ async function checkBudget() {
 }
 
 /**
- * Adds to the daily cost counter.
+ * Atomically reserves [amount] USD against the global daily budget.
+ *
+ * Check + increment happen in one transaction (pre-increment pattern), so
+ * parallel instances can never collectively overshoot the kill switch the way
+ * a separate read-then-increment pair would. Reserve BEFORE the paid call and
+ * refund with [releaseBudget] if that call fails.
  */
-async function addCost(amount) {
+async function reserveBudget(amount) {
   const ref = db.collection('config').doc('daily_budget');
-  await ref.set(
-    { currentCost: admin.firestore.FieldValue.increment(amount) },
-    { merge: true }
-  );
+
+  await db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists ? snap.data() : {};
+
+    const currentCost = data.currentCost ?? 0;
+    const maxCost = data.maxCost ?? DEFAULT_MAX_COST;
+
+    if (data.enabled !== false && currentCost + amount > maxCost) {
+      throw functionsHttpsError(
+        'resource-exhausted',
+        'Daily limit reached. Please try tomorrow.',
+        { errorCode: 'BUDGET_EXCEEDED' }
+      );
+    }
+
+    tx.set(ref, { currentCost: currentCost + amount }, { merge: true });
+  });
+}
+
+/**
+ * Refunds a reservation made by [reserveBudget] (e.g. the provider call
+ * failed). Never throws — best-effort so a refund glitch does not mask the
+ * original error.
+ */
+async function releaseBudget(amount) {
+  try {
+    const ref = db.collection('config').doc('daily_budget');
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) return;
+      const currentCost = snap.data().currentCost ?? 0;
+      tx.set(ref, { currentCost: Math.max(0, currentCost - amount) }, { merge: true });
+    });
+  } catch (err) {
+    // Logged by caller if needed; do not rethrow.
+  }
 }
 
 /**
@@ -392,11 +446,13 @@ module.exports = {
   releaseQuota,
   incrementUsage,
   checkBudget,
-  addCost,
+  reserveBudget,
+  releaseBudget,
   getCache,
   setCache,
   logRequest,
   ESTIMATED_COSTS,
+  METADATA_LIMITS,
   validateGenerateContent,
   validateGenerateImage,
   validateAnalyzeSeo,
